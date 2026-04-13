@@ -1,0 +1,149 @@
+<Window x:Class="CargoTransport.Desktop.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:behaviors="clr-namespace:CargoTransport.Desktop.Behaviors"
+        mc:Ignorable="d"
+        Title="Авторизация"
+        Width="828"
+        Height="571"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen"
+        Style="{StaticResource MaterialDesignWindow}">
+    <Grid Background="#E8EEF2">
+        <Border Margin="24"
+                CornerRadius="32"
+                Background="White"
+                materialDesign:ElevationAssist.Elevation="Dp8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.05*" />
+                    <ColumnDefinition Width="1.25*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        CornerRadius="32,0,0,32">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#0F5C69" Offset="0" />
+                            <GradientStop Color="#1B7A8A" Offset="0.55" />
+                            <GradientStop Color="#6FB9C2" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+
+                    <Grid Margin="40">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="Cargo Transport"
+                                       FontSize="34"
+                                       FontWeight="Bold"
+                                       Foreground="White" />
+                            <TextBlock Margin="0,14,0,0"
+                                       Text="Стартовый клиент дипломного проекта"
+                                       FontSize="18"
+                                       Foreground="#D7F1F2" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="Что уже работает"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="White" />
+                            <TextBlock Margin="0,16,0,0"
+                                       Text="• подключение к MariaDB&#x0a;• инициализация ролей и тестового администратора&#x0a;• авторизация по логину и паролю&#x0a;• переход в главное окно"
+                                       FontSize="15"
+                                       LineHeight="28"
+                                       Foreground="#E5F8F8" />
+                        </StackPanel>
+
+                        <Border Grid.Row="2"
+                                Padding="18,14"
+                                CornerRadius="20"
+                                Background="#1A000000">
+                            <TextBlock Text="Локальная БД может работать как отдельная служба Windows. На этом этапе клиенту не нужен API."
+                                       TextWrapping="Wrap"
+                                       FontSize="14"
+                                       Foreground="White" />
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Column="1"
+                      Margin="56,48">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Вход в систему"
+                               FontSize="30"
+                               FontWeight="SemiBold"
+                               Foreground="#22303A" />
+
+                    <TextBlock Grid.Row="1"
+                               Margin="0,12,0,0"
+                               Text="Если база пока пустая, приложение при старте создаст учетную запись администратора по данным из App.config."
+                               TextWrapping="Wrap"
+                               FontSize="14"
+                               Foreground="#667582" />
+
+                    <TextBox Grid.Row="2"
+                             Margin="0,28,0,0"
+                             FontSize="15"
+                             materialDesign:HintAssist.Hint="Логин"
+                             Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <PasswordBox Grid.Row="3"
+                                 Margin="0,18,0,0"
+                                 FontSize="15"
+                                 behaviors:PasswordBoxAssistant.BindPassword="True"
+                                 behaviors:PasswordBoxAssistant.BoundPassword="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="Пароль" />
+
+                    <CheckBox Grid.Row="4"
+                              Margin="0,18,0,0"
+                              Content="Запомнить логин на этом ПК"
+                              IsChecked="{Binding RememberUsername}" />
+
+                    <TextBlock Grid.Row="5"
+                               Margin="0,18,0,0"
+                               Foreground="#C62828"
+                               FontSize="13"
+                               Text="{Binding ErrorMessage}"
+                               TextWrapping="Wrap"
+                               MinHeight="36" />
+
+                    <ProgressBar Grid.Row="6"
+                                 Height="4"
+                                 Margin="0,8,0,0"
+                                 IsIndeterminate="True"
+                                 Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                    <Button Grid.Row="7"
+                            Height="48"
+                            Margin="0,24,0,0"
+                            VerticalAlignment="Top"
+                            Content="Войти"
+                            Command="{Binding LoginCommand}"
+                            IsDefault="True"
+                            IsEnabled="{Binding IsNotBusy}" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
