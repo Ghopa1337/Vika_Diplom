@@ -3,7 +3,7 @@ using System.Windows.Input;
 
 namespace CargoTransport.Desktop.ViewModels;
 
-public class LoginViewModel : ViewModelBase
+public sealed class LoginViewModel : ViewModelBase
 {
     private readonly IAuthenticationService _authenticationService;
     private readonly IConfigService _configService;
@@ -35,25 +35,13 @@ public class LoginViewModel : ViewModelBase
     public string Username
     {
         get => _username;
-        set
-        {
-            if (Set(ref _username, value))
-            {
-                _loginCommand.RaiseCanExecuteChanged();
-            }
-        }
+        set => Set(ref _username, value);
     }
 
     public string Password
     {
         get => _password;
-        set
-        {
-            if (Set(ref _password, value))
-            {
-                _loginCommand.RaiseCanExecuteChanged();
-            }
-        }
+        set => Set(ref _password, value);
     }
 
     public string ErrorMessage
@@ -71,24 +59,34 @@ public class LoginViewModel : ViewModelBase
     public bool IsBusy
     {
         get => _isBusy;
-        private set
-        {
-            if (Set(ref _isBusy, value))
-            {
-                OnPropertyChanged(nameof(IsNotBusy));
-                _loginCommand.RaiseCanExecuteChanged();
-            }
-        }
+        private set => Set(ref _isBusy, value);
     }
 
     public bool IsNotBusy => !IsBusy;
 
-    private bool CanLogin()
+    protected override void OnPropertyChanged(string? propertyName)
     {
-        return !string.IsNullOrWhiteSpace(Username)
-            && !string.IsNullOrWhiteSpace(Password)
-            && !IsBusy;
+        base.OnPropertyChanged(propertyName);
+
+        switch (propertyName)
+        {
+            case nameof(Username):
+            case nameof(Password):
+            case nameof(IsBusy):
+                if (propertyName == nameof(IsBusy))
+                {
+                    OnPropertyChanged(nameof(IsNotBusy));
+                }
+
+                _loginCommand.RaiseCanExecuteChanged();
+                break;
+        }
     }
+
+    private bool CanLogin() =>
+        !string.IsNullOrWhiteSpace(Username)
+        && !string.IsNullOrWhiteSpace(Password)
+        && !IsBusy;
 
     private async Task LoginAsync()
     {

@@ -1,6 +1,5 @@
-using CargoTransport.Desktop.Data;
 using CargoTransport.Desktop.Models;
-using Microsoft.EntityFrameworkCore;
+using CargoTransport.Desktop.Repositories;
 
 namespace CargoTransport.Desktop.Services;
 
@@ -9,37 +8,35 @@ public interface IDatabaseInitializer
     Task InitializeAsync(CancellationToken cancellationToken = default);
 }
 
-public class DatabaseInitializer : IDatabaseInitializer
+public sealed class DatabaseInitializer : IDatabaseInitializer
 {
-    private readonly IDbContextFactory<CargoTransportDbContext> _dbContextFactory;
+    private readonly IRepositoryManager _repositoryManager;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IConfigService _configService;
 
     public DatabaseInitializer(
-        IDbContextFactory<CargoTransportDbContext> dbContextFactory,
+        IRepositoryManager repositoryManager,
         IPasswordHasher passwordHasher,
         IConfigService configService)
     {
-        _dbContextFactory = dbContextFactory;
+        _repositoryManager = repositoryManager;
         _passwordHasher = passwordHasher;
         _configService = configService;
     }
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        await using CargoTransportDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-
-        if (!await dbContext.Database.CanConnectAsync(cancellationToken))
+        if (!await _repositoryManager.Schema.CanConnectAsync(cancellationToken))
         {
             throw new InvalidOperationException("Не удалось подключиться к базе данных cargo_transport_db.");
         }
 
-        await EnsureCoreTablesAsync(dbContext, cancellationToken);
-        await SeedRolesAsync(dbContext, cancellationToken);
-        await SeedDefaultAdministratorAsync(dbContext, cancellationToken);
+        await EnsureCoreTablesAsync(cancellationToken);
+        await SeedRolesAsync(cancellationToken);
+        await SeedDefaultAdministratorAsync(cancellationToken);
     }
 
-    private static async Task EnsureCoreTablesAsync(CargoTransportDbContext dbContext, CancellationToken cancellationToken)
+    private async Task EnsureCoreTablesAsync(CancellationToken cancellationToken)
     {
         const string createRolesTable = """
             CREATE TABLE IF NOT EXISTS roles (
@@ -100,12 +97,12 @@ public class DatabaseInitializer : IDatabaseInitializer
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """;
 
-        await dbContext.Database.ExecuteSqlRawAsync(createRolesTable, cancellationToken);
-        await dbContext.Database.ExecuteSqlRawAsync(createUsersTable, cancellationToken);
-        await dbContext.Database.ExecuteSqlRawAsync(createActivityLogsTable, cancellationToken);
+        await _repositoryManager.Schema.ExecuteSqlAsync(createRolesTable, cancellationToken);
+        await _repositoryManager.Schema.ExecuteSqlAsync(createUsersTable, cancellationToken);
+        await _repositoryManager.Schema.ExecuteSqlAsync(createActivityLogsTable, cancellationToken);
     }
 
-    private static async Task SeedRolesAsync(CargoTransportDbContext dbContext, CancellationToken cancellationToken)
+    private async Task SeedRolesAsync(CancellationToken cancellationToken)
     {
         var definitions = new[]
         {
@@ -117,11 +114,11 @@ public class DatabaseInitializer : IDatabaseInitializer
 
         foreach (var definition in definitions)
         {
-            Role? role = await dbContext.Roles.FirstOrDefaultAsync(x => x.Code == definition.Code, cancellationToken);
+            Role? role = await _repositoryManager.Role.GetRoleByCodeAsync(definition.Code, trackChanges: true, cancellationToken);
 
             if (role is null)
             {
-                dbContext.Roles.Add(new Role
+                _repositoryManager.Role.CreateRole(new Role
                 {
                     Code = definition.Code,
                     Name = definition.Name,
@@ -132,27 +129,30 @@ public class DatabaseInitializer : IDatabaseInitializer
             {
                 role.Name = definition.Name;
                 role.Description = definition.Description;
+                _repositoryManager.Role.UpdateRole(role);
             }
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await _repositoryManager.SaveAsync(cancellationToken);
+        _repositoryManager.Clear();
     }
 
-    private async Task SeedDefaultAdministratorAsync(CargoTransportDbContext dbContext, CancellationToken cancellationToken)
+    private async Task SeedDefaultAdministratorAsync(CancellationToken cancellationToken)
     {
         string username = _configService.GetValueOrDefault("App.DefaultAdminUsername", "admin");
         string password = _configService.GetValueOrDefault("App.DefaultAdminPassword", "Admin123!");
         string fullName = _configService.GetValueOrDefault("App.DefaultAdminFullName", "Системный администратор");
 
-        bool userExists = await dbContext.Users.AnyAsync(x => x.Username == username, cancellationToken);
+        bool userExists = await _repositoryManager.User.ExistsByUsernameAsync(username, cancellationToken);
         if (userExists)
         {
             return;
         }
 
-        Role adminRole = await dbContext.Roles.FirstAsync(x => x.Code == "admin", cancellationToken);
+        Role adminRole = await _repositoryManager.Role.GetRoleByCodeAsync("admin", trackChanges: false, cancellationToken)
+            ?? throw new InvalidOperationException("Не найдена роль администратора.");
 
-        dbContext.Users.Add(new User
+        _repositoryManager.User.CreateUser(new User
         {
             Username = username,
             PasswordHash = _passwordHasher.HashPassword(password),
@@ -165,6 +165,7 @@ public class DatabaseInitializer : IDatabaseInitializer
             UpdatedAt = DateTime.Now
         });
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await _repositoryManager.SaveAsync(cancellationToken);
+        _repositoryManager.Clear();
     }
 }

@@ -4,131 +4,615 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:viewModels="clr-namespace:CargoTransport.Desktop.ViewModels"
         mc:Ignorable="d"
         Title="Система учета грузоперевозок"
-        Width="1180"
-        Height="760"
-        MinWidth="980"
-        MinHeight="640"
+        Width="1360"
+        Height="860"
+        MinWidth="1180"
+        MinHeight="720"
         WindowStartupLocation="CenterScreen"
         Style="{StaticResource MaterialDesignWindow}">
-    <DockPanel Background="#F4F7FB">
-        <Border DockPanel.Dock="Top"
-                Background="#0F5C69"
-                Padding="28,22">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+    <Window.Resources>
+        <Style x:Key="SectionDataGridStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+            <Setter Property="CanUserResizeRows" Value="False" />
+            <Setter Property="CanUserSortColumns" Value="False" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="RowHeaderWidth" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="#E5ECF1" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="RowBackground" Value="White" />
+            <Setter Property="AlternatingRowBackground" Value="#F8FAFC" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#EEF2F5" />
+            <Setter Property="VerticalGridLinesBrush" Value="#EEF2F5" />
+            <Setter Property="ColumnHeaderStyle">
+                <Setter.Value>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="FontSize" Value="13" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                        <Setter Property="Foreground" Value="#51606D" />
+                        <Setter Property="Background" Value="#F5F8FB" />
+                        <Setter Property="BorderBrush" Value="#F5F8FB" />
+                        <Setter Property="Padding" Value="14,12" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="CellStyle">
+                <Setter.Value>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Padding" Value="14,12" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Foreground" Value="#22303A" />
+                        <Setter Property="FontSize" Value="13" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                <StackPanel>
-                    <TextBlock Text="{Binding Title}"
-                               FontSize="28"
-                               FontWeight="SemiBold"
+        <DataTemplate DataType="{x:Type viewModels:AdminDashboardSectionViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Margin="0,0,0,22">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.2*" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Margin="0,0,18,0" Padding="28" CornerRadius="28">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#0F5C69" Offset="0" />
+                                <GradientStop Color="#1D7A8A" Offset="0.6" />
+                                <GradientStop Color="#6DB9C3" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <StackPanel>
+                            <TextBlock Text="Центр контроля логистики" FontSize="26" FontWeight="Bold" Foreground="White" />
+                            <TextBlock Margin="0,12,0,0" Text="Здесь администратор видит сводку по заказам, пользователям, транспорту и водителям. Блок последних действий вынесен отдельно, как в ТЗ."
+                                       FontSize="15" LineHeight="24" TextWrapping="Wrap" Foreground="#E4FAFB" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Padding="24" CornerRadius="28" Background="#FFF7E8" BorderBrush="#F5D58C" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Требует внимания" FontSize="14" FontWeight="SemiBold" Foreground="#7B5A10" />
+                            <TextBlock Margin="0,14,0,0" Text="3 заказа просрочены, 1 ТС в ремонте и 2 водителя готовы к новому распределению."
+                                       TextWrapping="Wrap" FontSize="14" LineHeight="22" Foreground="#6A5330" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding Metrics}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,16,16" Padding="20" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,10,0,0" Text="{Binding Value}" FontSize="24" FontWeight="SemiBold" Foreground="#1E2B35" />
+                                    <TextBlock Margin="0,8,0,0" Text="{Binding Hint}" FontSize="13" TextWrapping="Wrap" Foreground="#6A7784" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Grid Grid.Row="2" Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.55*" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Margin="0,0,18,0" Padding="26" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Последние действия пользователей" FontSize="20" FontWeight="SemiBold" Foreground="#22303A" />
+                            <ItemsControl Grid.Row="1" Margin="0,24,0,0" ItemsSource="{Binding RecentActivities}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,18">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="74" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="56" Height="56" CornerRadius="18" Background="#E8F5F7" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding Time}" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#0F5C69" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" Foreground="#22303A" />
+                                                <TextBlock Margin="0,6,0,0" Text="{Binding Description}" FontSize="13" TextWrapping="Wrap" Foreground="#687683" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Column="1" Padding="26" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Быстрые фокусы" FontSize="20" FontWeight="SemiBold" Foreground="#22303A" />
+                            <ItemsControl Margin="0,24,0,0" ItemsSource="{Binding QuickActions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,14" Padding="18" CornerRadius="20" Background="#F7FAFC" BorderBrush="#E9EEF3" BorderThickness="1">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" Foreground="#22303A" />
+                                                <TextBlock Margin="0,8,0,0" Text="{Binding Description}" FontSize="13" TextWrapping="Wrap" Foreground="#667582" />
+                                                <TextBlock Margin="0,10,0,0" Text="{Binding Caption}" FontSize="12" Foreground="#0F5C69" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:AdminUsersSectionViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <ItemsControl ItemsSource="{Binding Stats}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,16,16" Padding="20" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,10,0,0" Text="{Binding Value}" FontSize="24" FontWeight="SemiBold" Foreground="#1E2B35" />
+                                    <TextBlock Margin="0,8,0,0" Text="{Binding Hint}" FontSize="13" TextWrapping="Wrap" Foreground="#6A7784" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Border Grid.Row="1" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Users}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Логин" Binding="{Binding Username}" Width="1.1*" />
+                            <DataGridTextColumn Header="ФИО / организация" Binding="{Binding FullName}" Width="2.2*" />
+                            <DataGridTextColumn Header="Роль" Binding="{Binding Role}" Width="1.2*" />
+                            <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="1*" />
+                            <DataGridTextColumn Header="Телефон" Binding="{Binding Phone}" Width="1.2*" />
+                            <DataGridTextColumn Header="Последний вход" Binding="{Binding LastLogin}" Width="1.4*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:AdminOrdersSectionViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <ItemsControl ItemsSource="{Binding Stats}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,16,16" Padding="20" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,10,0,0" Text="{Binding Value}" FontSize="24" FontWeight="SemiBold" Foreground="#1E2B35" />
+                                    <TextBlock Margin="0,8,0,0" Text="{Binding Hint}" FontSize="13" TextWrapping="Wrap" Foreground="#6A7784" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Border Grid.Row="1" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Orders}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Номер заказа" Binding="{Binding OrderNumber}" Width="1.4*" />
+                            <DataGridTextColumn Header="Получатель" Binding="{Binding Receiver}" Width="1.8*" />
+                            <DataGridTextColumn Header="Водитель" Binding="{Binding Driver}" Width="1.4*" />
+                            <DataGridTextColumn Header="Транспорт" Binding="{Binding Vehicle}" Width="1.2*" />
+                            <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="1.1*" />
+                            <DataGridTextColumn Header="Плановая доставка" Binding="{Binding DeliveryDate}" Width="1.4*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:AdminDriversSectionViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <ItemsControl ItemsSource="{Binding Stats}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,16,16" Padding="20" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,10,0,0" Text="{Binding Value}" FontSize="24" FontWeight="SemiBold" Foreground="#1E2B35" />
+                                    <TextBlock Margin="0,8,0,0" Text="{Binding Hint}" FontSize="13" TextWrapping="Wrap" Foreground="#6A7784" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Border Grid.Row="1" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Drivers}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ФИО" Binding="{Binding FullName}" Width="2*" />
+                            <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="1*" />
+                            <DataGridTextColumn Header="Номер ВУ" Binding="{Binding LicenseNumber}" Width="1.4*" />
+                            <DataGridTextColumn Header="Стаж" Binding="{Binding Experience}" Width="1*" />
+                            <DataGridTextColumn Header="Телефон" Binding="{Binding Phone}" Width="1.2*" />
+                            <DataGridTextColumn Header="Текущий заказ" Binding="{Binding CurrentOrder}" Width="1.3*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:AdminVehiclesSectionViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <ItemsControl ItemsSource="{Binding Stats}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,16,16" Padding="20" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,10,0,0" Text="{Binding Value}" FontSize="24" FontWeight="SemiBold" Foreground="#1E2B35" />
+                                    <TextBlock Margin="0,8,0,0" Text="{Binding Hint}" FontSize="13" TextWrapping="Wrap" Foreground="#6A7784" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Border Grid.Row="1" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Vehicles}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Госномер" Binding="{Binding LicensePlate}" Width="1.1*" />
+                            <DataGridTextColumn Header="Модель" Binding="{Binding Model}" Width="1.7*" />
+                            <DataGridTextColumn Header="Тип кузова" Binding="{Binding BodyType}" Width="1.2*" />
+                            <DataGridTextColumn Header="Грузоподъемность" Binding="{Binding Capacity}" Width="1.2*" />
+                            <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="1.1*" />
+                            <DataGridTextColumn Header="Закрепленный водитель" Binding="{Binding AssignedDriver}" Width="1.5*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:AdminReportsSectionViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <ItemsControl ItemsSource="{Binding Stats}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,16,16" Padding="20" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,10,0,0" Text="{Binding Value}" FontSize="24" FontWeight="SemiBold" Foreground="#1E2B35" />
+                                    <TextBlock Margin="0,8,0,0" Text="{Binding Hint}" FontSize="13" TextWrapping="Wrap" Foreground="#6A7784" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <ItemsControl Grid.Row="1" Margin="0,18,0,0" ItemsSource="{Binding Reports}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Width="310" Margin="0,0,18,18" Padding="24" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" Foreground="#22303A" />
+                                    <TextBlock Margin="0,10,0,0" Text="{Binding Description}" TextWrapping="Wrap" FontSize="13" LineHeight="22" Foreground="#687683" />
+                                    <Border Margin="0,18,0,0" Padding="10,6" HorizontalAlignment="Left" CornerRadius="14" Background="#E8F5F7">
+                                        <TextBlock Text="{Binding Format}" FontSize="12" FontWeight="SemiBold" Foreground="#0F5C69" />
+                                    </Border>
+                                    <TextBlock Margin="0,14,0,0" Text="{Binding Freshness}" FontSize="12" Foreground="#6A7784" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid Background="#EEF3F7">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0"
+                Margin="18"
+                CornerRadius="32">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#0E4F59" Offset="0" />
+                    <GradientStop Color="#176C7A" Offset="0.55" />
+                    <GradientStop Color="#4D98A2" Offset="1" />
+                </LinearGradientBrush>
+            </Border.Background>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Margin="28,28,28,18">
+                    <TextBlock Text="Cargo Transport"
+                               FontSize="30"
+                               FontWeight="Bold"
                                Foreground="White" />
-                    <TextBlock Margin="0,6,0,0"
-                               Text="{Binding Subtitle}"
+                    <TextBlock Margin="0,10,0,0"
+                               Text="{Binding ShellSubtitle}"
                                FontSize="14"
-                               Foreground="#D9F0F1" />
+                               LineHeight="22"
+                               TextWrapping="Wrap"
+                               Foreground="#D8F1F2" />
                 </StackPanel>
 
-                <Border Grid.Column="1"
-                        Padding="18,10"
-                        CornerRadius="18"
-                        Background="#1C7583"
-                        VerticalAlignment="Center">
+                <Border Grid.Row="1"
+                        Margin="28,0,28,22"
+                        Padding="18"
+                        CornerRadius="22"
+                        Background="#18000000">
                     <StackPanel>
                         <TextBlock Text="{Binding CurrentUserName}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="White" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Text="{Binding CurrentUserRole}"
+                                   FontSize="13"
+                                   Foreground="#D8F1F2" />
+                        <TextBlock Margin="0,12,0,0"
+                                   Text="{Binding SessionLabel}"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   Foreground="#C6E8EA" />
+                    </StackPanel>
+                </Border>
+
+                <ListBox Grid.Row="2"
+                         Margin="20,0,20,0"
+                         ItemsSource="{Binding NavigationItems}"
+                         SelectedItem="{Binding SelectedNavigationItem}"
+                         Background="Transparent"
+                         BorderThickness="0">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Margin" Value="0,0,0,10" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Foreground" Value="#D7F1F2" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="NavigationItemBorder"
+                                                Padding="18,16"
+                                                CornerRadius="20"
+                                                Background="#13000000">
+                                            <ContentPresenter />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="NavigationItemBorder" Property="Background" Value="#F4C95D" />
+                                                <Setter Property="Foreground" Value="#17313A" />
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="NavigationItemBorder" Property="Background" Value="#24FFFFFF" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=Foreground}" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding Subtitle}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"
+                                               Foreground="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=Foreground}" />
+                                </StackPanel>
+                                <Border Grid.Column="1"
+                                        Padding="10,4"
+                                        CornerRadius="12"
+                                        Background="#1AFFFFFF"
+                                        VerticalAlignment="Top">
+                                    <TextBlock Text="{Binding Badge}"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"
+                                               Foreground="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=Foreground}" />
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <Border Grid.Row="3"
+                        Margin="28,18,28,28"
+                        Padding="18"
+                        CornerRadius="22"
+                        Background="#18000000">
+                    <StackPanel>
+                        <TextBlock Text="Подключение"
                                    FontSize="14"
                                    FontWeight="SemiBold"
                                    Foreground="White" />
-                        <TextBlock Margin="0,2,0,0"
-                                   Text="{Binding CurrentUserRole}"
+                        <TextBlock Margin="0,10,0,0"
+                                   Text="MariaDB / локальный сервер"
+                                   FontSize="13"
+                                   Foreground="#D8F1F2" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="{Binding CurrentUserLogin}"
                                    FontSize="12"
-                                   Foreground="#CFECEF" />
+                                   Foreground="#C6E8EA" />
                     </StackPanel>
                 </Border>
             </Grid>
         </Border>
 
-        <Grid Margin="28">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+        <Border Grid.Column="1"
+                Margin="0,18,18,18"
+                Padding="26"
+                CornerRadius="30"
+                Background="White"
+                BorderBrush="#E5ECF1"
+                BorderThickness="1"
+                materialDesign:ElevationAssist.Elevation="Dp1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-            <UniformGrid Columns="3" Margin="0,0,0,24">
-                <Border Margin="0,0,16,0"
-                        Padding="20"
-                        CornerRadius="20"
-                        Background="White"
-                        materialDesign:ElevationAssist.Elevation="Dp2">
-                    <StackPanel>
-                        <TextBlock Text="Статус подключения"
-                                   FontSize="13"
-                                   Foreground="#6A7784" />
-                        <TextBlock Margin="0,10,0,0"
-                                   Text="MariaDB подключена"
-                                   FontSize="20"
-                                   FontWeight="SemiBold"
-                                   Foreground="#0F5C69" />
-                    </StackPanel>
-                </Border>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                <Border Margin="0,0,16,0"
-                        Padding="20"
-                        CornerRadius="20"
-                        Background="White"
-                        materialDesign:ElevationAssist.Elevation="Dp2">
                     <StackPanel>
-                        <TextBlock Text="Текущий этап"
-                                   FontSize="13"
-                                   Foreground="#6A7784" />
-                        <TextBlock Margin="0,10,0,0"
-                                   Text="Авторизация и стартовый каркас"
-                                   FontSize="20"
-                                   FontWeight="SemiBold"
-                                   TextWrapping="Wrap"
+                        <TextBlock Text="{Binding SelectedNavigationTitle}"
+                                   FontSize="28"
+                                   FontWeight="Bold"
                                    Foreground="#22303A" />
-                    </StackPanel>
-                </Border>
-
-                <Border Padding="20"
-                        CornerRadius="20"
-                        Background="White"
-                        materialDesign:ElevationAssist.Elevation="Dp2">
-                    <StackPanel>
-                        <TextBlock Text="Что дальше"
-                                   FontSize="13"
-                                   Foreground="#6A7784" />
-                        <TextBlock Margin="0,10,0,0"
-                                   Text="Заказы, пользователи, транспорт, водители"
-                                   FontSize="20"
-                                   FontWeight="SemiBold"
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="{Binding SelectedNavigationSubtitle}"
+                                   FontSize="14"
                                    TextWrapping="Wrap"
-                                   Foreground="#22303A" />
+                                   Foreground="#6B7985" />
                     </StackPanel>
-                </Border>
-            </UniformGrid>
 
-            <Border Grid.Row="1"
-                    Padding="28"
-                    CornerRadius="24"
-                    Background="White"
-                    materialDesign:ElevationAssist.Elevation="Dp2">
-                <StackPanel>
-                    <TextBlock Text="Пустое главное окно"
-                               FontSize="24"
-                               FontWeight="SemiBold"
-                               Foreground="#22303A" />
-                    <TextBlock Margin="0,12,0,0"
-                               Text="{Binding PlaceholderText}"
-                               FontSize="15"
-                               Foreground="#5D6B78"
-                               TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
-        </Grid>
-    </DockPanel>
+                    <Border Grid.Column="1"
+                            Margin="18,0,0,0"
+                            Padding="16,10"
+                            CornerRadius="18"
+                            Background="#F6FAFC"
+                            VerticalAlignment="Center">
+                        <StackPanel>
+                            <TextBlock Text="Сегодня"
+                                       FontSize="11"
+                                       Foreground="#6A7784" />
+                            <TextBlock Margin="0,2,0,0"
+                                       Text="{Binding TodayLabel}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="#22303A" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2"
+                            Margin="14,0,0,0"
+                            Padding="18,10"
+                            CornerRadius="18"
+                            Background="#E8F5F7"
+                            VerticalAlignment="Center">
+                        <StackPanel>
+                            <TextBlock Text="{Binding CurrentUserName}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="#0F5C69" />
+                            <TextBlock Margin="0,2,0,0"
+                                       Text="{Binding CurrentUserRole}"
+                                       FontSize="12"
+                                       Foreground="#4E7B81" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Grid.Row="1"
+                        Margin="0,26,0,0"
+                        Padding="24"
+                        CornerRadius="26"
+                        Background="#F8FBFD">
+                    <ContentPresenter Content="{Binding SelectedContent}" />
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
 </Window>

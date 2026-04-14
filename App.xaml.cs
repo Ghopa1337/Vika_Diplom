@@ -1,4 +1,5 @@
 using CargoTransport.Desktop.Data;
+using CargoTransport.Desktop.Repositories;
 using CargoTransport.Desktop.Services;
 using CargoTransport.Desktop.ViewModels;
 using Microsoft.EntityFrameworkCore;
@@ -10,8 +11,9 @@ namespace CargoTransport.Desktop;
 public partial class App : Application
 {
     private ServiceProvider? _serviceProvider;
+    private IServiceScope? _mainWindowScope;
 
-    public IServiceProvider Services => _serviceProvider
+    public ServiceProvider Services => _serviceProvider
         ?? throw new InvalidOperationException("Service provider is not initialized.");
 
     protected override async void OnStartup(StartupEventArgs e)
@@ -22,7 +24,8 @@ public partial class App : Application
 
         try
         {
-            await Services.GetRequiredService<IDatabaseInitializer>().InitializeAsync();
+            using IServiceScope startupScope = Services.CreateScope();
+            await startupScope.ServiceProvider.GetRequiredService<IDatabaseInitializer>().InitializeAsync();
         }
         catch (Exception ex)
         {
@@ -36,13 +39,19 @@ public partial class App : Application
             return;
         }
 
-        var loginWindow = Services.GetRequiredService<LoginWindow>();
-        bool? dialogResult = loginWindow.ShowDialog();
+        bool? dialogResult;
+        using (IServiceScope loginScope = Services.CreateScope())
+        {
+            var loginWindow = loginScope.ServiceProvider.GetRequiredService<LoginWindow>();
+            dialogResult = loginWindow.ShowDialog();
+        }
 
         if (dialogResult == true)
         {
+            _mainWindowScope = Services.CreateScope();
             ShutdownMode = ShutdownMode.OnMainWindowClose;
-            MainWindow = Services.GetRequiredService<MainWindow>();
+            MainWindow = _mainWindowScope.ServiceProvider.GetRequiredService<MainWindow>();
+            MainWindow.Closed += HandleMainWindowClosed;
             MainWindow.Show();
             return;
         }
@@ -52,8 +61,15 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _mainWindowScope?.Dispose();
         _serviceProvider?.Dispose();
         base.OnExit(e);
+    }
+
+    private void HandleMainWindowClosed(object? sender, EventArgs e)
+    {
+        _mainWindowScope?.Dispose();
+        _mainWindowScope = null;
     }
 
     private static ServiceProvider ConfigureServices()
@@ -65,8 +81,11 @@ public partial class App : Application
         services.AddSingleton<IWindowService, WindowService>();
         services.AddSingleton<IAuthStateService, AuthStateService>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
-        services.AddSingleton<IAuthenticationService, AuthenticationService>();
-        services.AddSingleton<IDatabaseInitializer, DatabaseInitializer>();
+
+        services.AddTransient<IRepositoryManager, RepositoryManager>();
+        services.AddTransient<IAuthenticationService, AuthenticationService>();
+        services.AddTransient<IDatabaseInitializer, DatabaseInitializer>();
+        services.AddTransient<IAdminPanelService, AdminPanelService>();
 
         services.AddDbContextFactory<CargoTransportDbContext>((provider, options) =>
         {

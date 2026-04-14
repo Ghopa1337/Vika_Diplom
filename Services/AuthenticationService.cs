@@ -1,6 +1,5 @@
-using CargoTransport.Desktop.Data;
 using CargoTransport.Desktop.Models;
-using Microsoft.EntityFrameworkCore;
+using CargoTransport.Desktop.Repositories;
 
 namespace CargoTransport.Desktop.Services;
 
@@ -11,18 +10,18 @@ public interface IAuthenticationService
     Task<AuthenticationResult> LoginAsync(string username, string password, CancellationToken cancellationToken = default);
 }
 
-public class AuthenticationService : IAuthenticationService
+public sealed class AuthenticationService : IAuthenticationService
 {
-    private readonly IDbContextFactory<CargoTransportDbContext> _dbContextFactory;
+    private readonly IRepositoryManager _repositoryManager;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IAuthStateService _authStateService;
 
     public AuthenticationService(
-        IDbContextFactory<CargoTransportDbContext> dbContextFactory,
+        IRepositoryManager repositoryManager,
         IPasswordHasher passwordHasher,
         IAuthStateService authStateService)
     {
-        _dbContextFactory = dbContextFactory;
+        _repositoryManager = repositoryManager;
         _passwordHasher = passwordHasher;
         _authStateService = authStateService;
     }
@@ -34,11 +33,8 @@ public class AuthenticationService : IAuthenticationService
             return new AuthenticationResult(false, "Введите логин и пароль.", null);
         }
 
-        await using CargoTransportDbContext dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-
-        User? user = await dbContext.Users
-            .Include(x => x.Role)
-            .FirstOrDefaultAsync(x => x.Username == username.Trim(), cancellationToken);
+        User? user = await _repositoryManager.User
+            .GetUserByUsernameWithRoleAsync(username.Trim(), trackChanges: true, cancellationToken);
 
         if (user is null)
         {
@@ -56,8 +52,9 @@ public class AuthenticationService : IAuthenticationService
         }
 
         user.LastLoginAt = DateTime.Now;
+        _repositoryManager.User.UpdateUser(user);
 
-        dbContext.ActivityLogs.Add(new ActivityLog
+        _repositoryManager.ActivityLog.CreateActivityLog(new ActivityLog
         {
             UserId = user.Id,
             EntityType = "user",
@@ -67,7 +64,8 @@ public class AuthenticationService : IAuthenticationService
             CreatedAt = DateTime.Now
         });
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await _repositoryManager.SaveAsync(cancellationToken);
+        _repositoryManager.Clear();
 
         var authenticatedUser = new AuthenticatedUser(
             user.Id,
