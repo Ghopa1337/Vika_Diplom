@@ -1,20 +1,35 @@
+using Sieve.Attributes;
+
 namespace CargoTransport.Desktop.Models;
 
 public class User
 {
+    [Sieve(CanFilter = true, CanSort = true)]
     public uint Id { get; set; }
+    [Sieve(CanFilter = true, CanSort = true)]
     public string Username { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
+    [Sieve(CanFilter = true, CanSort = true)]
     public string FullName { get; set; } = string.Empty;
+    [Sieve(CanFilter = true, CanSort = true)]
     public uint RoleId { get; set; }
+    [Sieve(CanFilter = true, CanSort = true)]
     public string? Email { get; set; }
+    [Sieve(CanFilter = true, CanSort = true)]
     public string? Phone { get; set; }
+    [Sieve(CanFilter = true, CanSort = true)]
     public string? CompanyName { get; set; }
+    [Sieve(CanFilter = true, CanSort = true)]
     public bool IsBlocked { get; set; }
+    [Sieve(CanFilter = true, CanSort = true)]
     public bool IsActive { get; set; } = true;
+    [Sieve(CanFilter = true, CanSort = true)]
     public bool MustChangePassword { get; set; }
+    [Sieve(CanFilter = true, CanSort = true)]
     public DateTime? LastLoginAt { get; set; }
+    [Sieve(CanFilter = true, CanSort = true)]
     public DateTime CreatedAt { get; set; }
+    [Sieve(CanFilter = true, CanSort = true)]
     public DateTime UpdatedAt { get; set; }
 
     public Role Role { get; set; } = null!;

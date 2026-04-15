@@ -8,6 +8,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 {
     private readonly IAuthStateService _authStateService;
     private readonly IAdminPanelService _adminPanelService;
+    private readonly IAdminCrudService _adminCrudService;
     private readonly AdminDashboardSectionViewModel _dashboardSection;
     private readonly AdminUsersSectionViewModel _usersSection;
     private readonly AdminOrdersSectionViewModel _ordersSection;
@@ -27,17 +28,19 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel(
         IAuthStateService authStateService,
-        IAdminPanelService adminPanelService)
+        IAdminPanelService adminPanelService,
+        IAdminCrudService adminCrudService)
     {
         _authStateService = authStateService;
         _adminPanelService = adminPanelService;
+        _adminCrudService = adminCrudService;
         _authStateService.AuthStateChanged += HandleAuthStateChanged;
 
         _dashboardSection = new AdminDashboardSectionViewModel();
-        _usersSection = new AdminUsersSectionViewModel();
-        _ordersSection = new AdminOrdersSectionViewModel();
-        _driversSection = new AdminDriversSectionViewModel();
-        _vehiclesSection = new AdminVehiclesSectionViewModel();
+        _usersSection = new AdminUsersSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
+        _ordersSection = new AdminOrdersSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
+        _driversSection = new AdminDriversSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
+        _vehiclesSection = new AdminVehiclesSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
         _reportsSection = new AdminReportsSectionViewModel();
 
         _dashboardNavigationItem = new AdminNavigationItemViewModel("Дашборд", "Оперативная сводка по системе и последним действиям", "0", _dashboardSection);
@@ -102,7 +105,19 @@ public sealed class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        AdminPanelData panelData = await _adminPanelService.GetAdminPanelDataAsync(cancellationToken);
+        await ReloadAdminPanelAsync(cancellationToken);
+        _isInitialized = true;
+    }
+
+    private async Task ReloadAdminPanelAsync(CancellationToken cancellationToken = default)
+    {
+        var query = new AdminPanelQuery(
+            _usersSection.BuildSieveModel(),
+            _ordersSection.BuildSieveModel(),
+            _driversSection.BuildSieveModel(),
+            _vehiclesSection.BuildSieveModel());
+
+        AdminPanelData panelData = await _adminPanelService.GetAdminPanelDataAsync(query, cancellationToken);
 
         _dashboardSection.ApplyData(panelData.Dashboard);
         _usersSection.ApplyData(panelData.Users);
@@ -111,14 +126,17 @@ public sealed class MainWindowViewModel : ViewModelBase
         _vehiclesSection.ApplyData(panelData.Vehicles);
         _reportsSection.ApplyData(panelData.Reports);
 
+        await _usersSection.LoadLookupsAsync(cancellationToken);
+        await _ordersSection.LoadLookupsAsync(cancellationToken);
+        await _driversSection.LoadLookupsAsync(cancellationToken);
+        await _vehiclesSection.LoadLookupsAsync(cancellationToken);
+
         _dashboardNavigationItem.Badge = $"{panelData.Dashboard.RecentActivities.Count}";
         _usersNavigationItem.Badge = $"{panelData.Users.Users.Count}";
         _ordersNavigationItem.Badge = $"{panelData.Orders.Orders.Count}";
         _driversNavigationItem.Badge = $"{panelData.Drivers.Drivers.Count}";
         _vehiclesNavigationItem.Badge = $"{panelData.Vehicles.Vehicles.Count}";
         _reportsNavigationItem.Badge = $"{panelData.Reports.Reports.Count}";
-
-        _isInitialized = true;
     }
 
     private void HandleAuthStateChanged(object? sender, EventArgs e)

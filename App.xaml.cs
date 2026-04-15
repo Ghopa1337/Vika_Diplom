@@ -4,6 +4,8 @@ using CargoTransport.Desktop.Services;
 using CargoTransport.Desktop.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Sieve.Models;
+using Sieve.Services;
 using System.Windows;
 
 namespace CargoTransport.Desktop;
@@ -86,6 +88,14 @@ public partial class App : Application
         services.AddTransient<IAuthenticationService, AuthenticationService>();
         services.AddTransient<IDatabaseInitializer, DatabaseInitializer>();
         services.AddTransient<IAdminPanelService, AdminPanelService>();
+        services.AddTransient<IAdminCrudService, AdminCrudService>();
+        services.Configure<SieveOptions>(options =>
+        {
+            options.CaseSensitive = false;
+            options.ThrowExceptions = true;
+        });
+        services.AddScoped<ISieveCustomFilterMethods, CargoSieveFilters>();
+        services.AddScoped<ISieveProcessor, CargoSieveProcessor>();
 
         services.AddDbContextFactory<CargoTransportDbContext>((provider, options) =>
         {

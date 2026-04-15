@@ -10,7 +10,9 @@ public interface IRepositoryManager : IAsyncDisposable, IDisposable
     IUserRepository User { get; }
     IDriverRepository Driver { get; }
     IVehicleRepository Vehicle { get; }
+    ICargoRepository Cargo { get; }
     IOrderRepository Order { get; }
+    IOrderStatusHistoryRepository OrderStatusHistory { get; }
     IActivityLogRepository ActivityLog { get; }
     IReportRepository Report { get; }
     Task SaveAsync(CancellationToken cancellationToken = default);
@@ -25,7 +27,9 @@ public sealed class RepositoryManager : IRepositoryManager
     private IUserRepository? _userRepository;
     private IDriverRepository? _driverRepository;
     private IVehicleRepository? _vehicleRepository;
+    private ICargoRepository? _cargoRepository;
     private IOrderRepository? _orderRepository;
+    private IOrderStatusHistoryRepository? _orderStatusHistoryRepository;
     private IActivityLogRepository? _activityLogRepository;
     private IReportRepository? _reportRepository;
 
@@ -39,7 +43,9 @@ public sealed class RepositoryManager : IRepositoryManager
     public IUserRepository User => _userRepository ??= new UserRepository(_context);
     public IDriverRepository Driver => _driverRepository ??= new DriverRepository(_context);
     public IVehicleRepository Vehicle => _vehicleRepository ??= new VehicleRepository(_context);
+    public ICargoRepository Cargo => _cargoRepository ??= new CargoRepository(_context);
     public IOrderRepository Order => _orderRepository ??= new OrderRepository(_context);
+    public IOrderStatusHistoryRepository OrderStatusHistory => _orderStatusHistoryRepository ??= new OrderStatusHistoryRepository(_context);
     public IActivityLogRepository ActivityLog => _activityLogRepository ??= new ActivityLogRepository(_context);
     public IReportRepository Report => _reportRepository ??= new ReportRepository(_context);
 

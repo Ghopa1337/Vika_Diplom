@@ -1,6 +1,8 @@
 using CargoTransport.Desktop.Models;
 using CargoTransport.Desktop.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Sieve.Models;
+using Sieve.Services;
 using System.Globalization;
 using System.Text.Json;
 
@@ -8,10 +10,62 @@ namespace CargoTransport.Desktop.Services;
 
 public sealed record AdminStatData(string Title, string Value, string Hint);
 public sealed record AdminActivityData(string Time, string Title, string Description);
-public sealed record AdminUserRowData(string Username, string FullName, string Role, string Status, string Phone, string LastLogin);
-public sealed record AdminOrderRowData(string OrderNumber, string Receiver, string Driver, string Vehicle, string Status, string DeliveryDate);
-public sealed record AdminDriverRowData(string FullName, string Status, string LicenseNumber, string Experience, string Phone, string CurrentOrder);
-public sealed record AdminVehicleRowData(string LicensePlate, string Model, string BodyType, string Capacity, string Status, string AssignedDriver);
+public sealed record AdminUserRowData(
+    uint Id,
+    string Username,
+    string FullName,
+    string Role,
+    string Status,
+    string Phone,
+    string LastLogin,
+    uint RoleId,
+    string? Email,
+    string? PhoneRaw,
+    string? CompanyName,
+    bool IsActive,
+    bool IsBlocked,
+    bool MustChangePassword);
+public sealed record AdminOrderRowData(
+    uint Id,
+    string OrderNumber,
+    string Receiver,
+    string Driver,
+    string Vehicle,
+    string Status,
+    string DeliveryDate,
+    uint ReceiverUserId,
+    uint CargoId,
+    uint? DriverId,
+    uint? VehicleId,
+    string PickupAddress,
+    string DeliveryAddress,
+    string? PickupContactName,
+    string? PickupContactPhone,
+    string? DeliveryContactName,
+    string? DeliveryContactPhone,
+    decimal? DistanceKm,
+    decimal? TotalCost,
+    string StatusCode,
+    DateTime? PlannedPickupAt,
+    DateTime? DesiredDeliveryAt,
+    string? CancellationReason,
+    string? Comment);
+public sealed record AdminDriverRowData(
+    uint Id,
+    string FullName,
+    string Status,
+    string LicenseNumber,
+    string Experience,
+    string Phone,
+    string CurrentOrder);
+public sealed record AdminVehicleRowData(
+    uint Id,
+    string LicensePlate,
+    string Model,
+    string BodyType,
+    string Capacity,
+    string Status,
+    string AssignedDriver);
 public sealed record AdminReportCardData(string Title, string Description, string Freshness, string Format);
 public sealed record AdminDashboardData(IReadOnlyList<AdminStatData> Metrics, IReadOnlyList<AdminActivityData> RecentActivities);
 public sealed record AdminUsersData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminUserRowData> Users);
@@ -27,43 +81,93 @@ public sealed record AdminPanelData(
     AdminVehiclesData Vehicles,
     AdminReportsData Reports);
 
+public sealed record AdminPanelQuery(
+    SieveModel? Users = null,
+    SieveModel? Orders = null,
+    SieveModel? Drivers = null,
+    SieveModel? Vehicles = null);
+
 public interface IAdminPanelService
 {
-    Task<AdminPanelData> GetAdminPanelDataAsync(CancellationToken cancellationToken = default);
+    Task<AdminPanelData> GetAdminPanelDataAsync(AdminPanelQuery? query = null, CancellationToken cancellationToken = default);
 }
 
 public sealed class AdminPanelService : IAdminPanelService
 {
     private static readonly CultureInfo RuCulture = CultureInfo.GetCultureInfo("ru-RU");
     private readonly IRepositoryManager _repositoryManager;
+    private readonly ISieveProcessor _sieveProcessor;
 
-    public AdminPanelService(IRepositoryManager repositoryManager)
+    public AdminPanelService(
+        IRepositoryManager repositoryManager,
+        ISieveProcessor sieveProcessor)
     {
         _repositoryManager = repositoryManager;
+        _sieveProcessor = sieveProcessor;
     }
 
-    public async Task<AdminPanelData> GetAdminPanelDataAsync(CancellationToken cancellationToken = default)
+    public async Task<AdminPanelData> GetAdminPanelDataAsync(AdminPanelQuery? query = null, CancellationToken cancellationToken = default)
     {
-        List<User> users = await _repositoryManager.User
+        List<User> dashboardUsers = await _repositoryManager.User
             .GetAllUsersWithRoles(trackChanges: false)
             .OrderBy(x => x.Role.Name)
             .ThenBy(x => x.Username)
             .ToListAsync(cancellationToken);
 
-        List<Driver> drivers = await _repositoryManager.Driver
+        List<Driver> dashboardDrivers = await _repositoryManager.Driver
             .GetAllDriversWithUsers(trackChanges: false)
             .OrderBy(x => x.User.FullName)
             .ToListAsync(cancellationToken);
 
-        List<Vehicle> vehicles = await _repositoryManager.Vehicle
+        List<Vehicle> dashboardVehicles = await _repositoryManager.Vehicle
             .GetAllVehiclesWithDrivers(trackChanges: false)
             .OrderBy(x => x.LicensePlate)
             .ToListAsync(cancellationToken);
 
-        List<Order> orders = await _repositoryManager.Order
+        List<Order> dashboardOrders = await _repositoryManager.Order
             .GetAllOrdersDetailed(trackChanges: false)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
+
+        IQueryable<User> usersQuery = ApplySieve(
+            query?.Users,
+            _repositoryManager.User.GetAllUsersWithRoles(trackChanges: false));
+        if (string.IsNullOrWhiteSpace(query?.Users?.Sorts))
+        {
+            usersQuery = usersQuery.OrderBy(x => x.Role.Name).ThenBy(x => x.Username);
+        }
+
+        List<User> users = await usersQuery.ToListAsync(cancellationToken);
+
+        IQueryable<Driver> driversQuery = ApplySieve(
+            query?.Drivers,
+            _repositoryManager.Driver.GetAllDriversWithUsers(trackChanges: false));
+        if (string.IsNullOrWhiteSpace(query?.Drivers?.Sorts))
+        {
+            driversQuery = driversQuery.OrderBy(x => x.User.FullName);
+        }
+
+        List<Driver> drivers = await driversQuery.ToListAsync(cancellationToken);
+
+        IQueryable<Vehicle> vehiclesQuery = ApplySieve(
+            query?.Vehicles,
+            _repositoryManager.Vehicle.GetAllVehiclesWithDrivers(trackChanges: false));
+        if (string.IsNullOrWhiteSpace(query?.Vehicles?.Sorts))
+        {
+            vehiclesQuery = vehiclesQuery.OrderBy(x => x.LicensePlate);
+        }
+
+        List<Vehicle> vehicles = await vehiclesQuery.ToListAsync(cancellationToken);
+
+        IQueryable<Order> ordersQuery = ApplySieve(
+            query?.Orders,
+            _repositoryManager.Order.GetAllOrdersDetailed(trackChanges: false));
+        if (string.IsNullOrWhiteSpace(query?.Orders?.Sorts))
+        {
+            ordersQuery = ordersQuery.OrderByDescending(x => x.CreatedAt);
+        }
+
+        List<Order> orders = await ordersQuery.ToListAsync(cancellationToken);
 
         List<ActivityLog> activities = await _repositoryManager.ActivityLog
             .GetRecentActivityLogsWithUsers(takeCount: 4, trackChanges: false)
@@ -77,12 +181,22 @@ public sealed class AdminPanelService : IAdminPanelService
         _repositoryManager.Clear();
 
         return new AdminPanelData(
-            BuildDashboardData(users, drivers, vehicles, orders, activities),
+            BuildDashboardData(dashboardUsers, dashboardDrivers, dashboardVehicles, dashboardOrders, activities),
             BuildUsersData(users),
             BuildOrdersData(orders),
-            BuildDriversData(drivers, orders),
-            BuildVehiclesData(vehicles, orders),
+            BuildDriversData(drivers, dashboardOrders),
+            BuildVehiclesData(vehicles, dashboardOrders),
             BuildReportsData(reports));
+    }
+
+    private IQueryable<T> ApplySieve<T>(SieveModel? model, IQueryable<T> source) where T : class
+    {
+        if (model is null || (string.IsNullOrWhiteSpace(model.Filters) && string.IsNullOrWhiteSpace(model.Sorts)))
+        {
+            return source;
+        }
+
+        return _sieveProcessor.Apply(model, source, applyPagination: false);
     }
 
     private static AdminDashboardData BuildDashboardData(
@@ -152,12 +266,20 @@ public sealed class AdminPanelService : IAdminPanelService
             .OrderBy(x => x.Role.Name)
             .ThenBy(x => x.Username)
             .Select(x => new AdminUserRowData(
+                x.Id,
                 x.Username,
                 x.CompanyName ?? x.FullName,
                 x.Role.Name,
                 GetUserStatus(x),
                 x.Phone ?? "Не указан",
-                FormatDateTime(x.LastLoginAt)))
+                FormatDateTime(x.LastLoginAt),
+                x.RoleId,
+                x.Email,
+                x.Phone,
+                x.CompanyName,
+                x.IsActive,
+                x.IsBlocked,
+                x.MustChangePassword))
             .ToList();
 
         return new AdminUsersData(stats, rows);
@@ -187,12 +309,30 @@ public sealed class AdminPanelService : IAdminPanelService
         List<AdminOrderRowData> rows = orders
             .OrderByDescending(x => x.CreatedAt)
             .Select(x => new AdminOrderRowData(
+                x.Id,
                 x.OrderNumber,
                 x.ReceiverUser.CompanyName ?? x.ReceiverUser.FullName,
                 x.Driver?.User is null ? "Не назначен" : FormatShortName(x.Driver.User.FullName),
                 x.Vehicle?.LicensePlate ?? "Не назначено",
                 GetOrderStatusName(x.Status),
-                FormatDateTime(x.DesiredDeliveryAt)))
+                FormatDateTime(x.DesiredDeliveryAt),
+                x.ReceiverUserId,
+                x.CargoId,
+                x.DriverId,
+                x.VehicleId,
+                x.PickupAddress,
+                x.DeliveryAddress,
+                x.PickupContactName,
+                x.PickupContactPhone,
+                x.DeliveryContactName,
+                x.DeliveryContactPhone,
+                x.DistanceKm,
+                x.TotalCost,
+                x.Status,
+                x.PlannedPickupAt,
+                x.DesiredDeliveryAt,
+                x.CancellationReason,
+                x.Comment))
             .ToList();
 
         return new AdminOrdersData(stats, rows);
@@ -217,6 +357,7 @@ public sealed class AdminPanelService : IAdminPanelService
             {
                 Order? currentOrder = GetCurrentOrderForDriver(x.Id, orders);
                 return new AdminDriverRowData(
+                    x.Id,
                     x.User.FullName,
                     GetDriverDisplayStatus(x, currentOrder),
                     x.LicenseNumber,
@@ -248,6 +389,7 @@ public sealed class AdminPanelService : IAdminPanelService
             {
                 Order? currentOrder = GetCurrentOrderForVehicle(x.Id, orders);
                 return new AdminVehicleRowData(
+                    x.Id,
                     x.LicensePlate,
                     x.Model,
                     GetBodyTypeName(x.BodyType),

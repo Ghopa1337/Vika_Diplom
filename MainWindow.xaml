@@ -55,6 +55,21 @@
             </Setter>
         </Style>
 
+        <Style x:Key="CrudTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+            <Setter Property="Margin" Value="0,0,10,10" />
+            <Setter Property="MinWidth" Value="190" />
+        </Style>
+
+        <Style x:Key="CrudComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignOutlinedComboBox}">
+            <Setter Property="Margin" Value="0,0,10,10" />
+            <Setter Property="MinWidth" Value="190" />
+        </Style>
+
+        <Style x:Key="CrudButtonStyle" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+            <Setter Property="Margin" Value="0,0,10,10" />
+            <Setter Property="MinWidth" Value="110" />
+        </Style>
+
         <DataTemplate DataType="{x:Type viewModels:AdminDashboardSectionViewModel}">
             <Grid>
                 <Grid.RowDefinitions>
@@ -173,6 +188,7 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
@@ -195,8 +211,57 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <Border Grid.Row="1" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
-                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Users}">
+                <Grid Grid.Row="1" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.95*" />
+                        <ColumnDefinition Width="1.35*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Expander Margin="0,0,12,0" Header="Фильтры" IsExpanded="True">
+                        <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <WrapPanel>
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Поиск: логин, ФИО, телефон" Text="{Binding FilterSearch, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Роль" ItemsSource="{Binding RoleFilterOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding FilterRoleId, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusFilterOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding FilterStatusCode, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Сортировка" ItemsSource="{Binding SortOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedSort, Mode=TwoWay}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Фильтр" Command="{Binding ApplyFilterCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Очистить" Command="{Binding ClearFilterCommand}" />
+                            </WrapPanel>
+                        </Border>
+                    </Expander>
+
+                    <Expander Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="True">
+                        <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <StackPanel>
+                            <WrapPanel>
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Новый" Command="{Binding BeginCreateCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Сохранить" Command="{Binding SaveCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Удалить" Command="{Binding DeleteCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Сброс" Command="{Binding ResetCommand}" />
+                                <TextBlock Margin="8,8,0,0" Text="{Binding StatusMessage}" Foreground="#0F5C69" TextWrapping="Wrap" />
+                            </WrapPanel>
+
+                            <UniformGrid Columns="4">
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Логин" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="{Binding PasswordHint}" Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="ФИО / организация" Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Роль" ItemsSource="{Binding RoleOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedRoleId, Mode=TwoWay}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Email" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Компания" Text="{Binding CompanyName, UpdateSourceTrigger=PropertyChanged}" />
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <CheckBox Margin="0,0,14,0" Content="Активен" IsChecked="{Binding IsActive}" />
+                                    <CheckBox Margin="0,0,14,0" Content="Заблокирован" IsChecked="{Binding IsBlocked}" />
+                                    <CheckBox Content="Сменить пароль" IsChecked="{Binding MustChangePassword}" />
+                                </StackPanel>
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+                </Expander>
+                </Grid>
+
+                <Border Grid.Row="2" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser, Mode=TwoWay}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Логин" Binding="{Binding Username}" Width="1.1*" />
                             <DataGridTextColumn Header="ФИО / организация" Binding="{Binding FullName}" Width="2.2*" />
@@ -214,6 +279,7 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
@@ -236,8 +302,64 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <Border Grid.Row="1" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
-                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Orders}">
+                <Grid Grid.Row="1" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.95*" />
+                        <ColumnDefinition Width="1.35*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Expander Margin="0,0,12,0" Header="Фильтры" IsExpanded="True">
+                        <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <WrapPanel>
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Поиск: номер, адрес, груз" Text="{Binding FilterSearch, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusFilterOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding FilterStatusCode, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Получатель" ItemsSource="{Binding ReceiverFilterOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding FilterReceiverUserId, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Водитель" ItemsSource="{Binding DriverFilterOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding FilterDriverId, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Сортировка" ItemsSource="{Binding SortOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedSort, Mode=TwoWay}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Фильтр" Command="{Binding ApplyFilterCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Очистить" Command="{Binding ClearFilterCommand}" />
+                            </WrapPanel>
+                        </Border>
+                    </Expander>
+
+                    <Expander Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="True">
+                        <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <StackPanel>
+                            <WrapPanel>
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Новый" Command="{Binding BeginCreateCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Сохранить" Command="{Binding SaveCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Удалить" Command="{Binding DeleteCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Сброс" Command="{Binding ResetCommand}" />
+                                <TextBlock Margin="8,8,0,0" Text="{Binding StatusMessage}" Foreground="#0F5C69" TextWrapping="Wrap" />
+                            </WrapPanel>
+
+                            <UniformGrid Columns="4">
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Номер заказа" Text="{Binding OrderNumber, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Получатель" ItemsSource="{Binding ReceiverOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedReceiverUserId, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Груз" ItemsSource="{Binding CargoOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedCargoId, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedStatusCode, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Водитель" ItemsSource="{Binding DriverOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedDriverId, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Транспорт" ItemsSource="{Binding VehicleOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedVehicleId, Mode=TwoWay}" />
+                                <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="План погрузки" SelectedDate="{Binding PlannedPickupAt, Mode=TwoWay}" />
+                                <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="Желаемая доставка" SelectedDate="{Binding DesiredDeliveryAt, Mode=TwoWay}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Адрес погрузки" Text="{Binding PickupAddress, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Адрес доставки" Text="{Binding DeliveryAddress, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Км" Text="{Binding DistanceKm, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Стоимость" Text="{Binding TotalCost, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Контакт погрузки" Text="{Binding PickupContactName, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон погрузки" Text="{Binding PickupContactPhone, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Контакт доставки" Text="{Binding DeliveryContactName, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон доставки" Text="{Binding DeliveryContactPhone, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Причина отмены" Text="{Binding CancellationReason, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Комментарий" Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" />
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+                </Expander>
+                </Grid>
+
+                <Border Grid.Row="2" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder, Mode=TwoWay}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Номер заказа" Binding="{Binding OrderNumber}" Width="1.4*" />
                             <DataGridTextColumn Header="Получатель" Binding="{Binding Receiver}" Width="1.8*" />
@@ -255,46 +377,6 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <ItemsControl ItemsSource="{Binding Stats}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Columns="3" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="0,0,16,16" Padding="20" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#6A7784" />
-                                    <TextBlock Margin="0,10,0,0" Text="{Binding Value}" FontSize="24" FontWeight="SemiBold" Foreground="#1E2B35" />
-                                    <TextBlock Margin="0,8,0,0" Text="{Binding Hint}" FontSize="13" TextWrapping="Wrap" Foreground="#6A7784" />
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <Border Grid.Row="1" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
-                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Drivers}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="ФИО" Binding="{Binding FullName}" Width="2*" />
-                            <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="1*" />
-                            <DataGridTextColumn Header="Номер ВУ" Binding="{Binding LicenseNumber}" Width="1.4*" />
-                            <DataGridTextColumn Header="Стаж" Binding="{Binding Experience}" Width="1*" />
-                            <DataGridTextColumn Header="Телефон" Binding="{Binding Phone}" Width="1.2*" />
-                            <DataGridTextColumn Header="Текущий заказ" Binding="{Binding CurrentOrder}" Width="1.3*" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Border>
-            </Grid>
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type viewModels:AdminVehiclesSectionViewModel}">
-            <Grid>
-                <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
@@ -318,8 +400,139 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <Border Grid.Row="1" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
-                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Vehicles}">
+                <Grid Grid.Row="1" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.95*" />
+                        <ColumnDefinition Width="1.35*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Expander Margin="0,0,12,0" Header="Фильтры" IsExpanded="True">
+                        <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <WrapPanel>
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Поиск: ФИО, ВУ, телефон" Text="{Binding FilterSearch, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusFilterOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding FilterStatusCode, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Сортировка" ItemsSource="{Binding SortOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedSort, Mode=TwoWay}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Фильтр" Command="{Binding ApplyFilterCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Очистить" Command="{Binding ClearFilterCommand}" />
+                            </WrapPanel>
+                        </Border>
+                    </Expander>
+
+                    <Expander Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="True">
+                        <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <StackPanel>
+                            <WrapPanel>
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Новый" Command="{Binding BeginCreateCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Сохранить" Command="{Binding SaveCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Удалить" Command="{Binding DeleteCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Сброс" Command="{Binding ResetCommand}" />
+                                <TextBlock Margin="8,8,0,0" Text="{Binding StatusMessage}" Foreground="#0F5C69" TextWrapping="Wrap" />
+                            </WrapPanel>
+
+                            <UniformGrid Columns="4">
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Пользователь" ItemsSource="{Binding DriverUserOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedDriverUserId, Mode=TwoWay}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Номер ВУ" Text="{Binding LicenseNumber, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Категория" Text="{Binding LicenseCategory, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Стаж" Text="{Binding ExperienceYears, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedStatusCode, Mode=TwoWay}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Заметки" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" />
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+                </Expander>
+                </Grid>
+
+                <Border Grid.Row="2" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Drivers}" SelectedItem="{Binding SelectedDriver, Mode=TwoWay}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ФИО" Binding="{Binding FullName}" Width="2*" />
+                            <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="1*" />
+                            <DataGridTextColumn Header="Номер ВУ" Binding="{Binding LicenseNumber}" Width="1.4*" />
+                            <DataGridTextColumn Header="Стаж" Binding="{Binding Experience}" Width="1*" />
+                            <DataGridTextColumn Header="Телефон" Binding="{Binding Phone}" Width="1.2*" />
+                            <DataGridTextColumn Header="Текущий заказ" Binding="{Binding CurrentOrder}" Width="1.3*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:AdminVehiclesSectionViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <ItemsControl ItemsSource="{Binding Stats}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,16,16" Padding="20" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,10,0,0" Text="{Binding Value}" FontSize="24" FontWeight="SemiBold" Foreground="#1E2B35" />
+                                    <TextBlock Margin="0,8,0,0" Text="{Binding Hint}" FontSize="13" TextWrapping="Wrap" Foreground="#6A7784" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Grid Grid.Row="1" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.95*" />
+                        <ColumnDefinition Width="1.35*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Expander Margin="0,0,12,0" Header="Фильтры" IsExpanded="True">
+                        <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <WrapPanel>
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Поиск: госномер, модель, водитель" Text="{Binding FilterSearch, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusFilterOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding FilterStatusCode, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Тип кузова" ItemsSource="{Binding BodyTypeFilterOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding FilterBodyTypeCode, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Сортировка" ItemsSource="{Binding SortOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedSort, Mode=TwoWay}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Фильтр" Command="{Binding ApplyFilterCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Очистить" Command="{Binding ClearFilterCommand}" />
+                            </WrapPanel>
+                        </Border>
+                    </Expander>
+
+                    <Expander Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="True">
+                        <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <StackPanel>
+                            <WrapPanel>
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Новый" Command="{Binding BeginCreateCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Сохранить" Command="{Binding SaveCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Удалить" Command="{Binding DeleteCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Сброс" Command="{Binding ResetCommand}" />
+                                <TextBlock Margin="8,8,0,0" Text="{Binding StatusMessage}" Foreground="#0F5C69" TextWrapping="Wrap" />
+                            </WrapPanel>
+
+                            <UniformGrid Columns="4">
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Госномер" Text="{Binding LicensePlate, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Модель" Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Грузоподъемность, кг" Text="{Binding CapacityKg, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Объем, м3" Text="{Binding VolumeM3, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Тип кузова" ItemsSource="{Binding BodyTypeOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedBodyTypeCode, Mode=TwoWay}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Год выпуска" Text="{Binding ProductionYear, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedStatusCode, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Закрепленный водитель" ItemsSource="{Binding DriverOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedCurrentDriverId, Mode=TwoWay}" />
+                                <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="Страховка до" SelectedDate="{Binding InsuranceExpiry, Mode=TwoWay}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Заметки" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" />
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+                </Expander>
+                </Grid>
+
+                <Border Grid.Row="2" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Vehicles}" SelectedItem="{Binding SelectedVehicle, Mode=TwoWay}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Госномер" Binding="{Binding LicensePlate}" Width="1.1*" />
                             <DataGridTextColumn Header="Модель" Binding="{Binding Model}" Width="1.7*" />
@@ -410,7 +623,7 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Margin="28,28,28,18">
-                    <TextBlock Text="Cargo Transport"
+                    <TextBlock Text="Cargo"
                                FontSize="30"
                                FontWeight="Bold"
                                Foreground="White" />
