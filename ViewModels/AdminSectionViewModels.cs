@@ -302,13 +302,13 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
     private uint? _editingUserId;
     private uint? _deleteArmedUserId;
     private string _filterSearch = string.Empty;
-    private uint _filterRoleId;
+    private uint? _filterRoleId;
     private string _filterStatusCode = string.Empty;
     private string _selectedSort = "role,username";
     private string _username = string.Empty;
     private string _password = string.Empty;
     private string _fullName = string.Empty;
-    private uint _selectedRoleId;
+    private uint? _selectedRoleId;
     private string _email = string.Empty;
     private string _phone = string.Empty;
     private string _companyName = string.Empty;
@@ -375,7 +375,7 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
         set => Set(ref _filterSearch, value);
     }
 
-    public uint FilterRoleId
+    public uint? FilterRoleId
     {
         get => _filterRoleId;
         set => Set(ref _filterRoleId, value);
@@ -411,7 +411,7 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
         set => Set(ref _fullName, value);
     }
 
-    public uint SelectedRoleId
+    public uint? SelectedRoleId
     {
         get => _selectedRoleId;
         set => Set(ref _selectedRoleId, value);
@@ -462,10 +462,8 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
         AdminCollectionHelper.ReplaceWith(RoleOptions, roles.Select(x => new AdminLookupItemViewModel(x.Id, x.DisplayName)));
         AdminCollectionHelper.ReplaceWith(RoleFilterOptions, AdminLookupHelper.WithEmpty(roles, "Все роли"));
 
-        if (SelectedRoleId == 0 && RoleOptions.Count > 0)
-        {
-            SelectedRoleId = RoleOptions[0].Id;
-        }
+        FilterRoleId = AdminLookupSelectionHelper.NormalizeOptionalSelection(FilterRoleId, RoleFilterOptions);
+        SelectedRoleId = AdminLookupSelectionHelper.NormalizeRequiredSelection(SelectedRoleId, RoleOptions);
     }
 
     public void ApplyData(AdminUsersData data)
@@ -505,9 +503,9 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
             filters.Add($"(Username|FullName|CompanyName|Email|Phone)@={value}");
         }
 
-        if (FilterRoleId != 0)
+        if (FilterRoleId is > 0)
         {
-            filters.Add($"RoleId=={FilterRoleId}");
+            filters.Add($"RoleId=={FilterRoleId.Value}");
         }
 
         switch (FilterStatusCode)
@@ -568,7 +566,7 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
     private void ClearFilters()
     {
         FilterSearch = string.Empty;
-        FilterRoleId = 0;
+        FilterRoleId = AdminLookupSelectionHelper.NormalizeOptionalSelection(0, RoleFilterOptions);
         FilterStatusCode = string.Empty;
         SelectedSort = "role,username";
         _ = RefreshPanelAsync();
@@ -587,7 +585,7 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
         Username = string.Empty;
         Password = string.Empty;
         FullName = string.Empty;
-        SelectedRoleId = RoleOptions.FirstOrDefault()?.Id ?? 0;
+        SelectedRoleId = AdminLookupSelectionHelper.NormalizeRequiredSelection(null, RoleOptions);
         Email = string.Empty;
         Phone = string.Empty;
         CompanyName = string.Empty;
@@ -622,7 +620,7 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
         !IsBusy
         && !string.IsNullOrWhiteSpace(Username)
         && !string.IsNullOrWhiteSpace(FullName)
-        && SelectedRoleId != 0
+        && SelectedRoleId is > 0
         && (EditingUserId.HasValue || !string.IsNullOrWhiteSpace(Password));
 
     private async Task SaveAsync()
@@ -632,7 +630,7 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
             Username,
             Password,
             FullName,
-            SelectedRoleId,
+            SelectedRoleId.GetValueOrDefault(),
             Email,
             Phone,
             CompanyName,
@@ -687,14 +685,14 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
     private uint? _deleteArmedOrderId;
     private string _filterSearch = string.Empty;
     private string _filterStatusCode = string.Empty;
-    private uint _filterReceiverUserId;
-    private uint _filterDriverId;
+    private uint? _filterReceiverUserId;
+    private uint? _filterDriverId;
     private string _selectedSort = "-CreatedAt";
     private string _orderNumber = string.Empty;
-    private uint _selectedReceiverUserId;
-    private uint _selectedCargoId;
-    private uint _selectedDriverId;
-    private uint _selectedVehicleId;
+    private uint? _selectedReceiverUserId;
+    private uint? _selectedCargoId;
+    private uint? _selectedDriverId;
+    private uint? _selectedVehicleId;
     private string _pickupAddress = string.Empty;
     private string _deliveryAddress = string.Empty;
     private string _pickupContactName = string.Empty;
@@ -794,13 +792,13 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
         set => Set(ref _filterStatusCode, value);
     }
 
-    public uint FilterReceiverUserId
+    public uint? FilterReceiverUserId
     {
         get => _filterReceiverUserId;
         set => Set(ref _filterReceiverUserId, value);
     }
 
-    public uint FilterDriverId
+    public uint? FilterDriverId
     {
         get => _filterDriverId;
         set => Set(ref _filterDriverId, value);
@@ -818,25 +816,25 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
         set => Set(ref _orderNumber, value);
     }
 
-    public uint SelectedReceiverUserId
+    public uint? SelectedReceiverUserId
     {
         get => _selectedReceiverUserId;
         set => Set(ref _selectedReceiverUserId, value);
     }
 
-    public uint SelectedCargoId
+    public uint? SelectedCargoId
     {
         get => _selectedCargoId;
         set => Set(ref _selectedCargoId, value);
     }
 
-    public uint SelectedDriverId
+    public uint? SelectedDriverId
     {
         get => _selectedDriverId;
         set => Set(ref _selectedDriverId, value);
     }
 
-    public uint SelectedVehicleId
+    public uint? SelectedVehicleId
     {
         get => _selectedVehicleId;
         set => Set(ref _selectedVehicleId, value);
@@ -936,8 +934,12 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
         AdminCollectionHelper.ReplaceWith(ReceiverFilterOptions, AdminLookupHelper.WithEmpty(receivers, "Все получатели"));
         AdminCollectionHelper.ReplaceWith(DriverFilterOptions, AdminLookupHelper.WithEmpty(drivers, "Все водители"));
 
-        SelectedReceiverUserId = KeepOrFirst(SelectedReceiverUserId, ReceiverOptions);
-        SelectedCargoId = KeepOrFirst(SelectedCargoId, CargoOptions);
+        FilterReceiverUserId = AdminLookupSelectionHelper.NormalizeOptionalSelection(FilterReceiverUserId, ReceiverFilterOptions);
+        FilterDriverId = AdminLookupSelectionHelper.NormalizeOptionalSelection(FilterDriverId, DriverFilterOptions);
+        SelectedReceiverUserId = AdminLookupSelectionHelper.NormalizeRequiredSelection(SelectedReceiverUserId, ReceiverOptions);
+        SelectedCargoId = AdminLookupSelectionHelper.NormalizeRequiredSelection(SelectedCargoId, CargoOptions);
+        SelectedDriverId = AdminLookupSelectionHelper.NormalizeOptionalSelection(SelectedDriverId, DriverOptions);
+        SelectedVehicleId = AdminLookupSelectionHelper.NormalizeOptionalSelection(SelectedVehicleId, VehicleOptions);
     }
 
     public void ApplyData(AdminOrdersData data)
@@ -992,14 +994,14 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
             filters.Add($"Status=={AdminSieveHelper.NormalizeValue(FilterStatusCode)}");
         }
 
-        if (FilterReceiverUserId != 0)
+        if (FilterReceiverUserId is > 0)
         {
-            filters.Add($"ReceiverUserId=={FilterReceiverUserId}");
+            filters.Add($"ReceiverUserId=={FilterReceiverUserId.Value}");
         }
 
-        if (FilterDriverId != 0)
+        if (FilterDriverId is > 0)
         {
-            filters.Add($"DriverId=={FilterDriverId}");
+            filters.Add($"DriverId=={FilterDriverId.Value}");
         }
 
         return new SieveModel
@@ -1048,8 +1050,8 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
     {
         FilterSearch = string.Empty;
         FilterStatusCode = string.Empty;
-        FilterReceiverUserId = 0;
-        FilterDriverId = 0;
+        FilterReceiverUserId = AdminLookupSelectionHelper.NormalizeOptionalSelection(0, ReceiverFilterOptions);
+        FilterDriverId = AdminLookupSelectionHelper.NormalizeOptionalSelection(0, DriverFilterOptions);
         SelectedSort = "-CreatedAt";
         _ = RefreshPanelAsync();
     }
@@ -1065,10 +1067,10 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
     {
         EditingOrderId = null;
         OrderNumber = string.Empty;
-        SelectedReceiverUserId = ReceiverOptions.FirstOrDefault()?.Id ?? 0;
-        SelectedCargoId = CargoOptions.FirstOrDefault()?.Id ?? 0;
-        SelectedDriverId = 0;
-        SelectedVehicleId = 0;
+        SelectedReceiverUserId = AdminLookupSelectionHelper.NormalizeRequiredSelection(null, ReceiverOptions);
+        SelectedCargoId = AdminLookupSelectionHelper.NormalizeRequiredSelection(null, CargoOptions);
+        SelectedDriverId = AdminLookupSelectionHelper.NormalizeOptionalSelection(0, DriverOptions);
+        SelectedVehicleId = AdminLookupSelectionHelper.NormalizeOptionalSelection(0, VehicleOptions);
         PickupAddress = string.Empty;
         DeliveryAddress = string.Empty;
         PickupContactName = string.Empty;
@@ -1116,8 +1118,8 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
 
     private bool CanSave() =>
         !IsBusy
-        && SelectedReceiverUserId != 0
-        && SelectedCargoId != 0
+        && SelectedReceiverUserId is > 0
+        && SelectedCargoId is > 0
         && !string.IsNullOrWhiteSpace(PickupAddress)
         && !string.IsNullOrWhiteSpace(DeliveryAddress);
 
@@ -1138,10 +1140,10 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
         var data = new AdminOrderEditData(
             EditingOrderId,
             OrderNumber,
-            SelectedReceiverUserId,
-            SelectedCargoId,
-            SelectedDriverId == 0 ? null : SelectedDriverId,
-            SelectedVehicleId == 0 ? null : SelectedVehicleId,
+            SelectedReceiverUserId.GetValueOrDefault(),
+            SelectedCargoId.GetValueOrDefault(),
+            SelectedDriverId is > 0 ? SelectedDriverId : null,
+            SelectedVehicleId is > 0 ? SelectedVehicleId : null,
             PickupAddress,
             DeliveryAddress,
             PickupContactName,
@@ -1189,10 +1191,6 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
         }
     }
 
-    private static uint KeepOrFirst(uint selectedId, ObservableCollection<AdminLookupItemViewModel> options) =>
-        selectedId != 0 && options.Any(x => x.Id == selectedId)
-            ? selectedId
-            : options.FirstOrDefault()?.Id ?? 0;
 }
 
 public sealed class AdminDriversSectionViewModel : AdminEditableSectionViewModel
@@ -1209,7 +1207,7 @@ public sealed class AdminDriversSectionViewModel : AdminEditableSectionViewModel
     private string _filterSearch = string.Empty;
     private string _filterStatusCode = string.Empty;
     private string _selectedSort = "driverName";
-    private uint _selectedDriverUserId;
+    private uint? _selectedDriverUserId;
     private string _licenseNumber = string.Empty;
     private string _licenseCategory = "CE";
     private string _experienceYears = "0";
@@ -1293,7 +1291,7 @@ public sealed class AdminDriversSectionViewModel : AdminEditableSectionViewModel
         set => Set(ref _selectedSort, value);
     }
 
-    public uint SelectedDriverUserId
+    public uint? SelectedDriverUserId
     {
         get => _selectedDriverUserId;
         set => Set(ref _selectedDriverUserId, value);
@@ -1335,9 +1333,7 @@ public sealed class AdminDriversSectionViewModel : AdminEditableSectionViewModel
     {
         IReadOnlyList<AdminLookupItemData> users = await AdminCrudService.GetDriverUserOptionsAsync(EditingDriverId, cancellationToken);
         AdminCollectionHelper.ReplaceWith(DriverUserOptions, users.Select(x => new AdminLookupItemViewModel(x.Id, x.DisplayName)));
-        SelectedDriverUserId = SelectedDriverUserId != 0 && DriverUserOptions.Any(x => x.Id == SelectedDriverUserId)
-            ? SelectedDriverUserId
-            : DriverUserOptions.FirstOrDefault()?.Id ?? 0;
+        SelectedDriverUserId = AdminLookupSelectionHelper.NormalizeRequiredSelection(SelectedDriverUserId, DriverUserOptions);
     }
 
     public void ApplyData(AdminDriversData data)
@@ -1433,7 +1429,7 @@ public sealed class AdminDriversSectionViewModel : AdminEditableSectionViewModel
     private void ResetForm()
     {
         EditingDriverId = null;
-        SelectedDriverUserId = DriverUserOptions.FirstOrDefault()?.Id ?? 0;
+        SelectedDriverUserId = AdminLookupSelectionHelper.NormalizeRequiredSelection(null, DriverUserOptions);
         LicenseNumber = string.Empty;
         LicenseCategory = "CE";
         ExperienceYears = "0";
@@ -1483,7 +1479,7 @@ public sealed class AdminDriversSectionViewModel : AdminEditableSectionViewModel
 
     private bool CanSave() =>
         !IsBusy
-        && SelectedDriverUserId != 0
+        && SelectedDriverUserId is > 0
         && !string.IsNullOrWhiteSpace(LicenseNumber)
         && !string.IsNullOrWhiteSpace(LicenseCategory)
         && ushort.TryParse(ExperienceYears, NumberStyles.Integer, CultureInfo.CurrentCulture, out _);
@@ -1498,7 +1494,7 @@ public sealed class AdminDriversSectionViewModel : AdminEditableSectionViewModel
 
         var data = new AdminDriverEditData(
             EditingDriverId,
-            SelectedDriverUserId,
+            SelectedDriverUserId.GetValueOrDefault(),
             LicenseNumber,
             LicenseCategory,
             parsedExperience,
@@ -1562,7 +1558,7 @@ public sealed class AdminVehiclesSectionViewModel : AdminEditableSectionViewMode
     private string _productionYear = string.Empty;
     private string _selectedStatusCode = "available";
     private DateTime? _insuranceExpiry;
-    private uint _selectedCurrentDriverId;
+    private uint? _selectedCurrentDriverId;
     private string _notes = string.Empty;
 
     public AdminVehiclesSectionViewModel(
@@ -1713,7 +1709,7 @@ public sealed class AdminVehiclesSectionViewModel : AdminEditableSectionViewMode
         set => Set(ref _insuranceExpiry, value);
     }
 
-    public uint SelectedCurrentDriverId
+    public uint? SelectedCurrentDriverId
     {
         get => _selectedCurrentDriverId;
         set => Set(ref _selectedCurrentDriverId, value);
@@ -1731,6 +1727,7 @@ public sealed class AdminVehiclesSectionViewModel : AdminEditableSectionViewMode
     {
         IReadOnlyList<AdminLookupItemData> drivers = await AdminCrudService.GetVehicleDriverOptionsAsync(EditingVehicleId, cancellationToken);
         AdminCollectionHelper.ReplaceWith(DriverOptions, AdminLookupHelper.WithEmpty(drivers, "Водитель не закреплен"));
+        SelectedCurrentDriverId = AdminLookupSelectionHelper.NormalizeOptionalSelection(SelectedCurrentDriverId, DriverOptions);
     }
 
     public void ApplyData(AdminVehiclesData data)
@@ -1841,7 +1838,7 @@ public sealed class AdminVehiclesSectionViewModel : AdminEditableSectionViewMode
         ProductionYear = string.Empty;
         SelectedStatusCode = "available";
         InsuranceExpiry = null;
-        SelectedCurrentDriverId = 0;
+        SelectedCurrentDriverId = AdminLookupSelectionHelper.NormalizeOptionalSelection(0, DriverOptions);
         Notes = string.Empty;
         _deleteArmedVehicleId = null;
     }
@@ -1875,7 +1872,7 @@ public sealed class AdminVehiclesSectionViewModel : AdminEditableSectionViewMode
             ProductionYear = data.ProductionYear?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
             SelectedStatusCode = data.Status;
             InsuranceExpiry = data.InsuranceExpiry;
-            SelectedCurrentDriverId = data.CurrentDriverId ?? 0;
+            SelectedCurrentDriverId = data.CurrentDriverId;
             Notes = data.Notes ?? string.Empty;
         }
         catch (Exception ex)
@@ -1926,7 +1923,7 @@ public sealed class AdminVehiclesSectionViewModel : AdminEditableSectionViewMode
             productionYear,
             SelectedStatusCode,
             InsuranceExpiry,
-            SelectedCurrentDriverId == 0 ? null : SelectedCurrentDriverId,
+            SelectedCurrentDriverId is > 0 ? SelectedCurrentDriverId : null,
             Notes);
 
         if (EditingVehicleId.HasValue)
@@ -2003,6 +2000,29 @@ internal static class AdminLookupHelper
         {
             yield return new AdminLookupItemViewModel(item.Id, item.DisplayName);
         }
+    }
+}
+
+internal static class AdminLookupSelectionHelper
+{
+    public static uint? NormalizeOptionalSelection(uint? selectedId, IEnumerable<AdminLookupItemViewModel> options)
+    {
+        if (selectedId.HasValue && options.Any(x => x.Id == selectedId.Value))
+        {
+            return selectedId;
+        }
+
+        return options.FirstOrDefault()?.Id;
+    }
+
+    public static uint? NormalizeRequiredSelection(uint? selectedId, IEnumerable<AdminLookupItemViewModel> options)
+    {
+        if (selectedId is > 0 && options.Any(x => x.Id == selectedId.Value))
+        {
+            return selectedId;
+        }
+
+        return options.FirstOrDefault(x => x.Id != 0)?.Id;
     }
 }
 
