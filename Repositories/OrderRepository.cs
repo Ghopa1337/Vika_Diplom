@@ -28,7 +28,9 @@ public sealed class OrderRepository : RepositoryBase<Order>, IOrderRepository
             .Include(x => x.Driver)
                 .ThenInclude(x => x!.User)
             .Include(x => x.Vehicle)
-            .Include(x => x.CreatedByUser);
+            .Include(x => x.CreatedByUser)
+            .Include(x => x.StatusHistory)
+                .ThenInclude(x => x.ChangedByUser);
 
     public Task<Order?> GetOrderByIdDetailedAsync(uint id, bool trackChanges, CancellationToken cancellationToken = default) =>
         GetAllOrdersDetailed(trackChanges)

@@ -41,6 +41,15 @@ public sealed record AdminVehicleEditData(
     uint? CurrentDriverId,
     string? Notes);
 
+public sealed record AdminCargoEditData(
+    uint? Id,
+    string Name,
+    string CargoType,
+    decimal WeightKg,
+    decimal? VolumeM3,
+    string? Description,
+    string? SpecialRequirements);
+
 public sealed record AdminOrderEditData(
     uint? Id,
     string OrderNumber,
@@ -71,11 +80,16 @@ public interface IAdminCrudService
     Task<IReadOnlyList<AdminLookupItemData>> GetDriverOptionsAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AdminLookupItemData>> GetVehicleDriverOptionsAsync(uint? currentVehicleId = null, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AdminLookupItemData>> GetVehicleOptionsAsync(CancellationToken cancellationToken = default);
+    Task<Order?> GetOrderDetailsAsync(uint orderId, CancellationToken cancellationToken = default);
+    Task<AdminCargoEditData?> GetCargoEditDataAsync(uint cargoId, CancellationToken cancellationToken = default);
     Task<AdminDriverEditData?> GetDriverEditDataAsync(uint driverId, CancellationToken cancellationToken = default);
     Task<AdminVehicleEditData?> GetVehicleEditDataAsync(uint vehicleId, CancellationToken cancellationToken = default);
     Task CreateUserAsync(AdminUserEditData data, CancellationToken cancellationToken = default);
     Task UpdateUserAsync(AdminUserEditData data, CancellationToken cancellationToken = default);
     Task DeleteUserAsync(uint userId, CancellationToken cancellationToken = default);
+    Task CreateCargoAsync(AdminCargoEditData data, CancellationToken cancellationToken = default);
+    Task UpdateCargoAsync(AdminCargoEditData data, CancellationToken cancellationToken = default);
+    Task DeleteCargoAsync(uint cargoId, CancellationToken cancellationToken = default);
     Task CreateDriverAsync(AdminDriverEditData data, CancellationToken cancellationToken = default);
     Task UpdateDriverAsync(AdminDriverEditData data, CancellationToken cancellationToken = default);
     Task DeleteDriverAsync(uint driverId, CancellationToken cancellationToken = default);
@@ -83,6 +97,7 @@ public interface IAdminCrudService
     Task UpdateVehicleAsync(AdminVehicleEditData data, CancellationToken cancellationToken = default);
     Task DeleteVehicleAsync(uint vehicleId, CancellationToken cancellationToken = default);
     Task CreateOrderAsync(AdminOrderEditData data, CancellationToken cancellationToken = default);
+    Task CreateOrderWithCargoAsync(AdminOrderEditData data, CargoItem cargo, CancellationToken cancellationToken = default);
     Task UpdateOrderAsync(AdminOrderEditData data, CancellationToken cancellationToken = default);
     Task DeleteOrderAsync(uint orderId, CancellationToken cancellationToken = default);
 }
@@ -208,6 +223,15 @@ public sealed class AdminCrudService : IAdminCrudService
         return options;
     }
 
+    public async Task<Order?> GetOrderDetailsAsync(uint orderId, CancellationToken cancellationToken = default)
+    {
+        Order? order = await _repositoryManager.Order
+            .GetOrderByIdDetailedAsync(orderId, trackChanges: false, cancellationToken);
+
+        _repositoryManager.Clear();
+        return order;
+    }
+
     public async Task<AdminDriverEditData?> GetDriverEditDataAsync(uint driverId, CancellationToken cancellationToken = default)
     {
         Driver? driver = await _repositoryManager.Driver
@@ -248,6 +272,25 @@ public sealed class AdminCrudService : IAdminCrudService
                 vehicle.InsuranceExpiry?.ToDateTime(TimeOnly.MinValue),
                 vehicle.CurrentDriverId,
                 vehicle.Notes);
+    }
+
+    public async Task<AdminCargoEditData?> GetCargoEditDataAsync(uint cargoId, CancellationToken cancellationToken = default)
+    {
+        CargoItem? cargo = await _repositoryManager.Cargo
+            .GetCargoByIdAsync(cargoId, trackChanges: false, cancellationToken);
+
+        _repositoryManager.Clear();
+
+        return cargo is null
+            ? null
+            : new AdminCargoEditData(
+                cargo.Id,
+                cargo.Name,
+                cargo.CargoType,
+                cargo.WeightKg,
+                cargo.VolumeM3,
+                cargo.Description,
+                cargo.SpecialRequirements);
     }
 
     public async Task CreateUserAsync(AdminUserEditData data, CancellationToken cancellationToken = default)
@@ -346,6 +389,59 @@ public sealed class AdminCrudService : IAdminCrudService
         _repositoryManager.User.DeleteUser(user);
         await _repositoryManager.SaveAsync(cancellationToken);
         await LogAsync("user", userId, "user_deleted", $"Удален пользователь {username}", cancellationToken);
+    }
+
+    public async Task CreateCargoAsync(AdminCargoEditData data, CancellationToken cancellationToken = default)
+    {
+        ValidateCargo(data);
+
+        var cargo = new CargoItem
+        {
+            Name = data.Name.Trim(),
+            CargoType = data.CargoType.Trim(),
+            WeightKg = data.WeightKg,
+            VolumeM3 = data.VolumeM3,
+            Description = NormalizeOptional(data.Description),
+            SpecialRequirements = NormalizeOptional(data.SpecialRequirements),
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
+        };
+
+        _repositoryManager.Cargo.CreateCargo(cargo);
+        await _repositoryManager.SaveAsync(cancellationToken);
+        await LogAsync("cargo", cargo.Id, "cargo_created", $"Добавлен груз {cargo.Name}", cancellationToken);
+    }
+
+    public async Task UpdateCargoAsync(AdminCargoEditData data, CancellationToken cancellationToken = default)
+    {
+        ValidateCargo(data);
+
+        uint cargoId = data.Id ?? throw new InvalidOperationException("Не выбран груз для изменения.");
+        CargoItem cargo = await _repositoryManager.Cargo.GetCargoByIdAsync(cargoId, trackChanges: true, cancellationToken)
+            ?? throw new InvalidOperationException("Груз не найден.");
+
+        cargo.Name = data.Name.Trim();
+        cargo.CargoType = data.CargoType.Trim();
+        cargo.WeightKg = data.WeightKg;
+        cargo.VolumeM3 = data.VolumeM3;
+        cargo.Description = NormalizeOptional(data.Description);
+        cargo.SpecialRequirements = NormalizeOptional(data.SpecialRequirements);
+        cargo.UpdatedAt = DateTime.Now;
+
+        _repositoryManager.Cargo.UpdateCargo(cargo);
+        await _repositoryManager.SaveAsync(cancellationToken);
+        await LogAsync("cargo", cargo.Id, "cargo_updated", $"Обновлен груз {cargo.Name}", cancellationToken);
+    }
+
+    public async Task DeleteCargoAsync(uint cargoId, CancellationToken cancellationToken = default)
+    {
+        CargoItem cargo = await _repositoryManager.Cargo.GetCargoByIdAsync(cargoId, trackChanges: true, cancellationToken)
+            ?? throw new InvalidOperationException("Груз не найден.");
+
+        string cargoName = cargo.Name;
+        _repositoryManager.Cargo.DeleteCargo(cargo);
+        await _repositoryManager.SaveAsync(cancellationToken);
+        await LogAsync("cargo", cargoId, "cargo_deleted", $"Удален груз {cargoName}", cancellationToken);
     }
 
     public async Task CreateDriverAsync(AdminDriverEditData data, CancellationToken cancellationToken = default)
@@ -494,6 +590,17 @@ public sealed class AdminCrudService : IAdminCrudService
         _repositoryManager.Vehicle.DeleteVehicle(vehicle);
         await _repositoryManager.SaveAsync(cancellationToken);
         await LogAsync("vehicle", vehicleId, "vehicle_deleted", $"Удален транспорт {licensePlate}", cancellationToken);
+    }
+
+    public async Task CreateOrderWithCargoAsync(AdminOrderEditData data, CargoItem cargo, CancellationToken cancellationToken = default)
+    {
+        // First, save the cargo item if it's new or needs update
+        _repositoryManager.Cargo.CreateCargo(cargo);
+        await _repositoryManager.SaveAsync(cancellationToken);
+
+        // Create order data with the new cargo ID
+        var orderData = data with { CargoId = cargo.Id };
+        await CreateOrderAsync(orderData, cancellationToken);
     }
 
     public async Task CreateOrderAsync(AdminOrderEditData data, CancellationToken cancellationToken = default)
@@ -702,6 +809,24 @@ public sealed class AdminCrudService : IAdminCrudService
         if (data.CapacityKg <= 0)
         {
             throw new InvalidOperationException("Грузоподъемность должна быть больше нуля.");
+        }
+    }
+
+    private static void ValidateCargo(AdminCargoEditData data)
+    {
+        if (string.IsNullOrWhiteSpace(data.Name))
+        {
+            throw new InvalidOperationException("Укажите наименование груза.");
+        }
+
+        if (string.IsNullOrWhiteSpace(data.CargoType))
+        {
+            throw new InvalidOperationException("Выберите тип груза.");
+        }
+
+        if (data.WeightKg <= 0)
+        {
+            throw new InvalidOperationException("Вес груза должен быть больше нуля.");
         }
     }
 

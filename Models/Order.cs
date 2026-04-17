@@ -29,7 +29,20 @@ public class Order
     [Sieve(CanFilter = true, CanSort = true)]
     public decimal? TotalCost { get; set; }
     [Sieve(CanFilter = true, CanSort = true)]
-    public string Status { get; set; } = "created";
+    public string Status { get; set; } = OrderStatuses.Created;
+
+    public static class OrderStatuses
+    {
+        public const string Created = "created";
+        public const string Assigned = "assigned";
+        public const string Accepted = "accepted";
+        public const string Loading = "loading";
+        public const string InTransit = "in_transit";
+        public const string Delivered = "delivered";
+        public const string Received = "received";
+        public const string Cancelled = "cancelled";
+    }
+
     [Sieve(CanFilter = true, CanSort = true)]
     public DateTime? PlannedPickupAt { get; set; }
     [Sieve(CanFilter = true, CanSort = true)]

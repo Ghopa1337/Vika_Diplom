@@ -50,6 +50,16 @@ public sealed record AdminOrderRowData(
     DateTime? DesiredDeliveryAt,
     string? CancellationReason,
     string? Comment);
+public sealed record AdminCargoRowData(
+    uint Id,
+    string Name,
+    string CargoType,
+    string Weight,
+    string Volume,
+    string UsageCount,
+    string UpdatedAt,
+    string? Description,
+    string? SpecialRequirements);
 public sealed record AdminDriverRowData(
     uint Id,
     string FullName,
@@ -70,6 +80,7 @@ public sealed record AdminReportCardData(string Title, string Description, strin
 public sealed record AdminDashboardData(IReadOnlyList<AdminStatData> Metrics, IReadOnlyList<AdminActivityData> RecentActivities);
 public sealed record AdminUsersData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminUserRowData> Users);
 public sealed record AdminOrdersData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminOrderRowData> Orders);
+public sealed record AdminCargoData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminCargoRowData> Cargo);
 public sealed record AdminDriversData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminDriverRowData> Drivers);
 public sealed record AdminVehiclesData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminVehicleRowData> Vehicles);
 public sealed record AdminReportsData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminReportCardData> Reports);
@@ -77,6 +88,7 @@ public sealed record AdminPanelData(
     AdminDashboardData Dashboard,
     AdminUsersData Users,
     AdminOrdersData Orders,
+    AdminCargoData Cargo,
     AdminDriversData Drivers,
     AdminVehiclesData Vehicles,
     AdminReportsData Reports);
@@ -84,6 +96,7 @@ public sealed record AdminPanelData(
 public sealed record AdminPanelQuery(
     SieveModel? Users = null,
     SieveModel? Orders = null,
+    SieveModel? Cargo = null,
     SieveModel? Drivers = null,
     SieveModel? Vehicles = null);
 
@@ -129,6 +142,11 @@ public sealed class AdminPanelService : IAdminPanelService
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
 
+        List<CargoItem> dashboardCargo = await _repositoryManager.Cargo
+            .GetAllCargo(trackChanges: false)
+            .OrderBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
         IQueryable<User> usersQuery = ApplySieve(
             query?.Users,
             _repositoryManager.User.GetAllUsersWithRoles(trackChanges: false));
@@ -169,6 +187,16 @@ public sealed class AdminPanelService : IAdminPanelService
 
         List<Order> orders = await ordersQuery.ToListAsync(cancellationToken);
 
+        IQueryable<CargoItem> cargoQuery = ApplySieve(
+            query?.Cargo,
+            _repositoryManager.Cargo.GetAllCargo(trackChanges: false));
+        if (string.IsNullOrWhiteSpace(query?.Cargo?.Sorts))
+        {
+            cargoQuery = cargoQuery.OrderByDescending(x => x.UpdatedAt);
+        }
+
+        List<CargoItem> cargo = await cargoQuery.ToListAsync(cancellationToken);
+
         List<ActivityLog> activities = await _repositoryManager.ActivityLog
             .GetRecentActivityLogsWithUsers(takeCount: 4, trackChanges: false)
             .ToListAsync(cancellationToken);
@@ -184,6 +212,7 @@ public sealed class AdminPanelService : IAdminPanelService
             BuildDashboardData(dashboardUsers, dashboardDrivers, dashboardVehicles, dashboardOrders, activities),
             BuildUsersData(users),
             BuildOrdersData(orders),
+            BuildCargoData(cargo, dashboardOrders),
             BuildDriversData(drivers, dashboardOrders),
             BuildVehiclesData(vehicles, dashboardOrders),
             BuildReportsData(reports));
@@ -336,6 +365,36 @@ public sealed class AdminPanelService : IAdminPanelService
             .ToList();
 
         return new AdminOrdersData(stats, rows);
+    }
+
+    private static AdminCargoData BuildCargoData(IReadOnlyCollection<CargoItem> cargo, IReadOnlyCollection<Order> orders)
+    {
+        int hazardousCount = cargo.Count(x => x.CargoType == "hazardous");
+        int oversizedCount = cargo.Count(x => x.CargoType == "oversized");
+        int usedInOrdersCount = cargo.Count(x => orders.Any(order => order.CargoId == x.Id));
+
+        var stats = new List<AdminStatData>
+        {
+            new("Всего грузов", cargo.Count.ToString(RuCulture), $"{usedInOrdersCount} уже используются в заказах"),
+            new("Опасные", hazardousCount.ToString(RuCulture), $"{oversizedCount} крупногабаритных позиций в справочнике"),
+            new("Тяжёлые", cargo.Count(x => x.WeightKg >= 1000).ToString(RuCulture), "Грузы с массой от 1000 кг и выше")
+        };
+
+        List<AdminCargoRowData> rows = cargo
+            .OrderByDescending(x => x.UpdatedAt)
+            .Select(x => new AdminCargoRowData(
+                x.Id,
+                x.Name,
+                GetCargoTypeName(x.CargoType),
+                $"{x.WeightKg:0.##} кг",
+                x.VolumeM3.HasValue ? $"{x.VolumeM3.Value:0.##} м3" : "Не указан",
+                orders.Count(order => order.CargoId == x.Id).ToString(RuCulture),
+                FormatDateTime(x.UpdatedAt),
+                x.Description,
+                x.SpecialRequirements))
+            .ToList();
+
+        return new AdminCargoData(stats, rows);
     }
 
     private static AdminDriversData BuildDriversData(IReadOnlyCollection<Driver> drivers, IReadOnlyCollection<Order> orders)
@@ -543,6 +602,17 @@ public sealed class AdminPanelService : IAdminPanelService
             _ => vehicle.Status
         };
     }
+
+    private static string GetCargoTypeName(string? cargoType) =>
+        cargoType switch
+        {
+            "normal" => "Обычный",
+            "hazardous" => "Опасный",
+            "perishable" => "Скоропортящийся",
+            "oversized" => "Крупногабаритный",
+            null or "" => "Не указан",
+            _ => cargoType
+        };
 
     private static string GetBodyTypeName(string? bodyType) =>
         bodyType switch

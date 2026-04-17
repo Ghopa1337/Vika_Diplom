@@ -3,8 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CargoTransport.Desktop.ViewModels"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:viewModels="clr-namespace:CargoTransport.Desktop.ViewModels"
+        xmlns:views="clr-namespace:CargoTransport.Desktop.Views"
         mc:Ignorable="d"
         Title="Система учета грузоперевозок"
         Width="1360"
@@ -74,6 +76,314 @@
         <Style x:Key="SectionExpanderStyle" TargetType="Expander">
             <Setter Property="VerticalAlignment" Value="Top" />
         </Style>
+
+        <DataTemplate DataType="{x:Type viewModels:OrderWizardViewModel}">
+            <views:OrderWizardView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:OrderDetailsViewModel}">
+            <views:OrderDetailsView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:RoleDashboardSectionViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Margin="0,0,0,22">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.2*" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Margin="0,0,18,0" Padding="28" CornerRadius="28">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#0F5C69" Offset="0" />
+                                <GradientStop Color="#1D7A8A" Offset="0.6" />
+                                <GradientStop Color="#6DB9C3" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <StackPanel>
+                            <TextBlock Text="{Binding HeroTitle}" FontSize="26" FontWeight="Bold" Foreground="White" />
+                            <TextBlock Margin="0,12,0,0"
+                                       Text="{Binding HeroDescription}"
+                                       FontSize="15"
+                                       LineHeight="24"
+                                       TextWrapping="Wrap"
+                                       Foreground="#E4FAFB" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Padding="24" CornerRadius="28" Background="#FFF7E8" BorderBrush="#F5D58C" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="{Binding FocusTitle}" FontSize="14" FontWeight="SemiBold" Foreground="#7B5A10" />
+                            <TextBlock Margin="0,14,0,0"
+                                       Text="{Binding FocusDescription}"
+                                       TextWrapping="Wrap"
+                                       FontSize="14"
+                                       LineHeight="22"
+                                       Foreground="#6A5330" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding Metrics}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,16,16" Padding="20" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,10,0,0" Text="{Binding Value}" FontSize="24" FontWeight="SemiBold" Foreground="#1E2B35" />
+                                    <TextBlock Margin="0,8,0,0" Text="{Binding Hint}" FontSize="13" TextWrapping="Wrap" Foreground="#6A7784" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Border Grid.Row="2" Padding="26" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Быстрые ориентиры" FontSize="20" FontWeight="SemiBold" Foreground="#22303A" />
+                        <ItemsControl Margin="0,24,0,0" ItemsSource="{Binding QuickActions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="330" Margin="0,0,18,18" Padding="18" CornerRadius="20" Background="#F7FAFC" BorderBrush="#E9EEF3" BorderThickness="1">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" Foreground="#22303A" />
+                                            <TextBlock Margin="0,8,0,0" Text="{Binding Description}" FontSize="13" TextWrapping="Wrap" Foreground="#667582" />
+                                            <TextBlock Margin="0,10,0,0" Text="{Binding Caption}" FontSize="12" Foreground="#0F5C69" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:RoleOrdersSectionViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <ItemsControl ItemsSource="{Binding Metrics}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,16,16" Padding="20" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,10,0,0" Text="{Binding Value}" FontSize="24" FontWeight="SemiBold" Foreground="#1E2B35" />
+                                    <TextBlock Margin="0,8,0,0" Text="{Binding Hint}" FontSize="13" TextWrapping="Wrap" Foreground="#6A7784" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Grid Grid.Row="1" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.15*" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Margin="0,0,12,0" Padding="22" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="{Binding HeaderTitle}" FontSize="22" FontWeight="Bold" Foreground="#22303A" />
+                            <TextBlock Margin="0,10,0,0"
+                                       Text="{Binding HeaderSubtitle}"
+                                       FontSize="13"
+                                       LineHeight="22"
+                                       TextWrapping="Wrap"
+                                       Foreground="#687683" />
+
+                            <WrapPanel Margin="0,18,0,0">
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}"
+                                         Width="230"
+                                         materialDesign:HintAssist.Hint="Поиск: номер, груз, адрес"
+                                         Text="{Binding FilterSearch, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}"
+                                          Width="180"
+                                          materialDesign:HintAssist.Hint="Статус"
+                                          ItemsSource="{Binding StatusFilterOptions}"
+                                          DisplayMemberPath="Name"
+                                          SelectedValuePath="Code"
+                                          SelectedValue="{Binding FilterStatusCode, Mode=TwoWay}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Фильтр" Command="{Binding ApplyFilterCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Очистить" Command="{Binding ClearFilterCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Обновить" Command="{Binding RefreshCommand}" />
+                            </WrapPanel>
+
+                            <TextBlock Margin="0,10,0,0"
+                                       Text="{Binding StatusMessage}"
+                                       TextWrapping="Wrap"
+                                       Foreground="#0F5C69" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Padding="22" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="{Binding ActionPanelTitle}" FontSize="20" FontWeight="SemiBold" Foreground="#22303A" />
+                            <TextBlock Margin="0,10,0,0"
+                                       Text="{Binding SelectedOrderSummary}"
+                                       FontSize="13"
+                                       LineHeight="22"
+                                       TextWrapping="Wrap"
+                                       Foreground="#687683" />
+
+                            <UniformGrid Margin="0,18,0,0" Columns="2">
+                                <StackPanel Margin="0,0,10,10">
+                                    <TextBlock Text="Статус" FontSize="12" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,6,0,0" Text="{Binding SelectedOrderStatusLabel}" FontSize="14" FontWeight="SemiBold" Foreground="#22303A" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,10,10">
+                                    <TextBlock Text="{Binding SelectedOrderCounterpartyLabel}" FontSize="12" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,6,0,0" Text="{Binding SelectedOrderCounterpartyValue}" FontSize="14" FontWeight="SemiBold" Foreground="#22303A" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,10,10">
+                                    <TextBlock Text="{Binding SelectedOrderVehicleLabel}" FontSize="12" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,6,0,0" Text="{Binding SelectedOrderVehicleValue}" FontSize="14" FontWeight="SemiBold" Foreground="#22303A" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,10,10">
+                                    <TextBlock Text="Стоимость" FontSize="12" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,6,0,0" Text="{Binding SelectedOrderCostValue}" FontSize="14" FontWeight="SemiBold" Foreground="#22303A" />
+                                </StackPanel>
+                            </UniformGrid>
+
+                            <StackPanel Margin="0,6,0,0">
+                                <TextBlock Text="{Binding SelectedOrderPickupLabel}" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,6,0,0" Text="{Binding SelectedOrderPickupValue}" FontSize="13" TextWrapping="Wrap" Foreground="#22303A" />
+                            </StackPanel>
+
+                            <StackPanel Margin="0,12,0,0">
+                                <TextBlock Text="{Binding SelectedOrderDeliveryLabel}" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,6,0,0" Text="{Binding SelectedOrderDeliveryValue}" FontSize="13" TextWrapping="Wrap" Foreground="#22303A" />
+                            </StackPanel>
+
+                            <WrapPanel Margin="0,18,0,0">
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Открыть карточку" Command="{Binding OpenDetailsCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Принять" Command="{Binding AcceptCommand}" Visibility="{Binding IsDriverMode, Converter={local:BooleanToVisibilityConverter}}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Отказаться" Command="{Binding RefuseCommand}" Visibility="{Binding IsDriverMode, Converter={local:BooleanToVisibilityConverter}}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Начать загрузку" Command="{Binding StartLoadingCommand}" Visibility="{Binding IsDriverMode, Converter={local:BooleanToVisibilityConverter}}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Доставлен" Command="{Binding MarkDeliveredCommand}" Visibility="{Binding IsDriverMode, Converter={local:BooleanToVisibilityConverter}}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Подтвердить получение" Command="{Binding ConfirmReceiptCommand}" Visibility="{Binding IsReceiverMode, Converter={local:BooleanToVisibilityConverter}}" />
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Grid.Row="2" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <DataGrid Style="{StaticResource SectionDataGridStyle}"
+                              ItemsSource="{Binding Orders}"
+                              SelectedItem="{Binding SelectedOrder, Mode=TwoWay}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Номер" Binding="{Binding OrderNumber}" Width="1.1*" />
+                            <DataGridTextColumn Header="Груз" Binding="{Binding Cargo}" Width="1.5*" />
+                            <DataGridTextColumn Header="Контрагент" Binding="{Binding CounterpartyValue}" Width="1.6*" />
+                            <DataGridTextColumn Header="Маршрут" Binding="{Binding Route}" Width="2.2*" />
+                            <DataGridTextColumn Header="Транспорт" Binding="{Binding Vehicle}" Width="1.1*" />
+                            <DataGridTextColumn Header="Статус" Binding="{Binding StatusName}" Width="1.1*" />
+                            <DataGridTextColumn Header="Срок" Binding="{Binding DeliveryDate}" Width="1.2*" />
+                            <DataGridTextColumn Header="Стоимость" Binding="{Binding Cost}" Width="1.1*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:RoleChecklistSectionViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.8*" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Margin="0,0,18,0" Padding="26" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="#22303A" />
+                            <TextBlock Margin="0,12,0,0"
+                                       Text="{Binding Subtitle}"
+                                       FontSize="14"
+                                       LineHeight="22"
+                                       TextWrapping="Wrap"
+                                       Foreground="#687683" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Padding="24" CornerRadius="24" Background="#F5FBFB" BorderBrush="#D5ECEE" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="{Binding CalloutTitle}" FontSize="14" FontWeight="SemiBold" Foreground="#0F5C69" />
+                            <TextBlock Margin="0,12,0,0"
+                                       Text="{Binding CalloutDescription}"
+                                       FontSize="13"
+                                       LineHeight="22"
+                                       TextWrapping="Wrap"
+                                       Foreground="#4E7B81" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,14" Padding="20" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold" Foreground="#22303A" />
+                                        <TextBlock Margin="0,8,0,0"
+                                                   Text="{Binding Description}"
+                                                   FontSize="13"
+                                                   LineHeight="22"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="#687683" />
+                                    </StackPanel>
+                                    <Border Grid.Column="1"
+                                            Margin="18,0,0,0"
+                                            Padding="12,6"
+                                            CornerRadius="14"
+                                            Background="#E8F5F7"
+                                            VerticalAlignment="Top">
+                                        <TextBlock Text="{Binding Status}" FontSize="12" FontWeight="SemiBold" Foreground="#0F5C69" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </DataTemplate>
 
         <DataTemplate DataType="{x:Type viewModels:AdminDashboardSectionViewModel}">
             <Grid>
@@ -331,33 +641,63 @@
                         <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                             <StackPanel>
                             <WrapPanel>
-                                <Button Style="{StaticResource CrudButtonStyle}" Content="Новый" Command="{Binding BeginCreateCommand}" />
-                                <Button Style="{StaticResource CrudButtonStyle}" Content="Сохранить" Command="{Binding SaveCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Создать заказ" Command="{Binding BeginCreateCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Открыть карточку" Command="{Binding OpenDetailsCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Сохранить изменения" Command="{Binding SaveCommand}" />
                                 <Button Style="{StaticResource CrudButtonStyle}" Content="Удалить" Command="{Binding DeleteCommand}" />
                                 <Button Style="{StaticResource CrudButtonStyle}" Content="Сброс" Command="{Binding ResetCommand}" />
                                 <TextBlock Margin="8,8,0,0" Text="{Binding StatusMessage}" Foreground="#0F5C69" TextWrapping="Wrap" />
                             </WrapPanel>
 
-                            <UniformGrid Columns="4">
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Номер заказа" Text="{Binding OrderNumber, UpdateSourceTrigger=PropertyChanged}" />
-                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Получатель" ItemsSource="{Binding ReceiverOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedReceiverUserId, Mode=TwoWay}" />
-                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Груз" ItemsSource="{Binding CargoOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedCargoId, Mode=TwoWay}" />
-                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedStatusCode, Mode=TwoWay}" />
-                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Водитель" ItemsSource="{Binding DriverOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedDriverId, Mode=TwoWay}" />
-                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Транспорт" ItemsSource="{Binding VehicleOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedVehicleId, Mode=TwoWay}" />
-                                <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="План погрузки" SelectedDate="{Binding PlannedPickupAt, Mode=TwoWay}" />
-                                <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="Желаемая доставка" SelectedDate="{Binding DesiredDeliveryAt, Mode=TwoWay}" />
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Адрес погрузки" Text="{Binding PickupAddress, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Адрес доставки" Text="{Binding DeliveryAddress, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Км" Text="{Binding DistanceKm, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Стоимость" Text="{Binding TotalCost, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Контакт погрузки" Text="{Binding PickupContactName, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон погрузки" Text="{Binding PickupContactPhone, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Контакт доставки" Text="{Binding DeliveryContactName, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон доставки" Text="{Binding DeliveryContactPhone, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Причина отмены" Text="{Binding CancellationReason, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Комментарий" Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" />
-                            </UniformGrid>
+                            <TextBlock Margin="0,10,0,0" Text="{Binding FormSubtitle}" Foreground="#687683" TextWrapping="Wrap" />
+
+                            <Border Margin="0,16,0,0"
+                                    Padding="18"
+                                    CornerRadius="18"
+                                    Background="#F7FAFC"
+                                    BorderBrush="#E7EDF2"
+                                    BorderThickness="1"
+                                    Visibility="{Binding HasSelectedOrder, Converter={local:InverseBooleanToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Как теперь создаётся заказ"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="#22303A" />
+                                    <TextBlock Margin="0,10,0,0"
+                                               Text="1. Откройте мастер создания заказа."
+                                               Foreground="#5F6D79" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="2. Укажите получателя и параметры груза по шагам."
+                                               Foreground="#5F6D79" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="3. Заполните маршрут, расчёт и при желании сразу назначьте экипаж."
+                                               Foreground="#5F6D79" />
+                                </StackPanel>
+                            </Border>
+
+                            <StackPanel Margin="0,16,0,0"
+                                        Visibility="{Binding HasSelectedOrder, Converter={local:BooleanToVisibilityConverter}}">
+                                <UniformGrid Columns="4">
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Номер заказа" Text="{Binding OrderNumber, UpdateSourceTrigger=PropertyChanged}" />
+                                    <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Получатель" ItemsSource="{Binding ReceiverOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedReceiverUserId, Mode=TwoWay}" />
+                                    <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Груз" ItemsSource="{Binding CargoOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedCargoId, Mode=TwoWay}" />
+                                    <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedStatusCode, Mode=TwoWay}" />
+                                    <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Водитель" ItemsSource="{Binding DriverOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedDriverId, Mode=TwoWay}" />
+                                    <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Транспорт" ItemsSource="{Binding VehicleOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedVehicleId, Mode=TwoWay}" />
+                                    <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="План погрузки" SelectedDate="{Binding PlannedPickupAt, Mode=TwoWay}" />
+                                    <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="Желаемая доставка" SelectedDate="{Binding DesiredDeliveryAt, Mode=TwoWay}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Адрес погрузки" Text="{Binding PickupAddress, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Адрес доставки" Text="{Binding DeliveryAddress, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Км" Text="{Binding DistanceKm, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Стоимость" Text="{Binding TotalCost, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Контакт погрузки" Text="{Binding PickupContactName, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон погрузки" Text="{Binding PickupContactPhone, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Контакт доставки" Text="{Binding DeliveryContactName, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон доставки" Text="{Binding DeliveryContactPhone, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Причина отмены" Text="{Binding CancellationReason, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Комментарий" Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" />
+                                </UniformGrid>
+                            </StackPanel>
                         </StackPanel>
                         </Border>
                     </Expander>
@@ -372,6 +712,91 @@
                             <DataGridTextColumn Header="Транспорт" Binding="{Binding Vehicle}" Width="1.2*" />
                             <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="1.1*" />
                             <DataGridTextColumn Header="Плановая доставка" Binding="{Binding DeliveryDate}" Width="1.4*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:AdminCargoSectionViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <ItemsControl ItemsSource="{Binding Stats}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,16,16" Padding="20" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#6A7784" />
+                                    <TextBlock Margin="0,10,0,0" Text="{Binding Value}" FontSize="24" FontWeight="SemiBold" Foreground="#1E2B35" />
+                                    <TextBlock Margin="0,8,0,0" Text="{Binding Hint}" FontSize="13" TextWrapping="Wrap" Foreground="#6A7784" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Grid Grid.Row="1" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.95*" />
+                        <ColumnDefinition Width="1.35*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Expander Style="{StaticResource SectionExpanderStyle}" Margin="0,0,12,0" Header="Фильтры" IsExpanded="True">
+                        <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <WrapPanel>
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Поиск: наименование, тип" Text="{Binding FilterSearch, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Тип груза" ItemsSource="{Binding CargoTypeFilterOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding FilterCargoTypeCode, Mode=TwoWay}" />
+                                <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Сортировка" ItemsSource="{Binding SortOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedSort, Mode=TwoWay}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Фильтр" Command="{Binding ApplyFilterCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Очистить" Command="{Binding ClearFilterCommand}" />
+                            </WrapPanel>
+                        </Border>
+                    </Expander>
+
+                    <Expander Style="{StaticResource SectionExpanderStyle}" Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="True">
+                        <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <StackPanel>
+                                <WrapPanel>
+                                    <Button Style="{StaticResource CrudButtonStyle}" Content="Новый" Command="{Binding BeginCreateCommand}" />
+                                    <Button Style="{StaticResource CrudButtonStyle}" Content="Сохранить" Command="{Binding SaveCommand}" />
+                                    <Button Style="{StaticResource CrudButtonStyle}" Content="Удалить" Command="{Binding DeleteCommand}" />
+                                    <Button Style="{StaticResource CrudButtonStyle}" Content="Сброс" Command="{Binding ResetCommand}" />
+                                    <TextBlock Margin="8,8,0,0" Text="{Binding StatusMessage}" Foreground="#0F5C69" TextWrapping="Wrap" />
+                                </WrapPanel>
+
+                                <UniformGrid Columns="4">
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Наименование" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                    <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Тип груза" ItemsSource="{Binding CargoTypeOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedCargoTypeCode, Mode=TwoWay}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Вес, кг" Text="{Binding WeightKg, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Объём, м3" Text="{Binding VolumeM3, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Описание" Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Особые требования" Text="{Binding SpecialRequirements, UpdateSourceTrigger=PropertyChanged}" />
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+                    </Expander>
+                </Grid>
+
+                <Border Grid.Row="2" Margin="0,10,0,0" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <DataGrid Style="{StaticResource SectionDataGridStyle}" ItemsSource="{Binding Cargo}" SelectedItem="{Binding SelectedCargo, Mode=TwoWay}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Наименование" Binding="{Binding Name}" Width="1.8*" />
+                            <DataGridTextColumn Header="Тип" Binding="{Binding CargoType}" Width="1.2*" />
+                            <DataGridTextColumn Header="Вес" Binding="{Binding Weight}" Width="1*" />
+                            <DataGridTextColumn Header="Объём" Binding="{Binding Volume}" Width="1*" />
+                            <DataGridTextColumn Header="В заказах" Binding="{Binding UsageCount}" Width="0.8*" />
+                            <DataGridTextColumn Header="Обновлён" Binding="{Binding UpdatedAt}" Width="1.2*" />
+                            <DataGridTextColumn Header="Особые требования" Binding="{Binding SpecialRequirements}" Width="1.6*" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>
@@ -823,13 +1248,30 @@
                     </Border>
                 </Grid>
 
-                <Border Grid.Row="1"
-                        Margin="0,26,0,0"
-                        Padding="24"
-                        CornerRadius="26"
-                        Background="#F8FBFD">
-                    <ContentPresenter Content="{Binding SelectedContent}" />
-                </Border>
+                <Grid Grid.Row="1">
+                    <!-- Background Content -->
+                    <Border Margin="0,26,0,0"
+                            Padding="24"
+                            CornerRadius="26"
+                            Background="#F8FBFD">
+                        <ContentPresenter Content="{Binding SelectedContent}" />
+                    </Border>
+
+                    <!-- Modal Overlay -->
+                    <Grid Visibility="{Binding ActiveModalContent, Converter={local:NullToVisibilityConverter}}">
+                        <Border Background="#40000000" />
+                        <Border Background="White"
+                                CornerRadius="24"
+                                Width="1040"
+                                Height="720"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                BorderBrush="#E5ECF1"
+                                BorderThickness="1">
+                            <ContentPresenter Content="{Binding ActiveModalContent}" />
+                        </Border>
+                    </Grid>
+                </Grid>
             </Grid>
         </Border>
     </Grid>

@@ -1,0 +1,269 @@
+<UserControl x:Class="CargoTransport.Desktop.Views.OrderDetailsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:CargoTransport.Desktop.ViewModels"
+             mc:Ignorable="d"
+             d:DesignHeight="720"
+             d:DesignWidth="1040">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <TextBlock Text="{Binding OrderNumber}"
+                           FontSize="28"
+                           FontWeight="Bold"
+                           Foreground="#22303A" />
+                <TextBlock Margin="0,8,0,0"
+                           Text="{Binding StatusHint}"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           Foreground="#6A7784" />
+            </StackPanel>
+
+            <Border Grid.Column="1"
+                    Padding="16,12"
+                    CornerRadius="18"
+                    Background="#E8F5F7"
+                    VerticalAlignment="Top">
+                <StackPanel>
+                    <TextBlock Text="Статус заказа"
+                               FontSize="11"
+                               Foreground="#4F7A81" />
+                    <TextBlock Margin="0,4,0,0"
+                               Text="{Binding StatusLabel}"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Foreground="#0F5C69" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="1"
+                Margin="0,22,0,22"
+                Padding="18"
+                CornerRadius="24"
+                Background="#F8FBFD"
+                BorderBrush="#E6EEF3"
+                BorderThickness="1">
+            <ItemsControl ItemsSource="{Binding StatusSteps}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="1" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,0,8,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Width="34"
+                                    Height="34"
+                                    Background="{Binding BadgeBackground}"
+                                    BorderBrush="{Binding BadgeBorderBrush}"
+                                    BorderThickness="2"
+                                    CornerRadius="17">
+                                <TextBlock HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Text="●"
+                                           Foreground="{Binding BadgeForeground}" />
+                            </Border>
+
+                            <StackPanel Grid.Column="1"
+                                        Margin="12,0,0,0"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Title}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{Binding TitleForeground}" />
+                                <TextBlock Margin="0,4,0,0"
+                                           Text="{Binding Caption}"
+                                           FontSize="11"
+                                           Foreground="#7B8894" />
+                                <Border Margin="0,8,0,0"
+                                        Height="3"
+                                        Background="{Binding ConnectorBrush}"
+                                        CornerRadius="2" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.45*" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          Margin="0,0,18,0">
+                <StackPanel>
+                    <UniformGrid Columns="4">
+                        <Border Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Стоимость" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,8,0,0" Text="{Binding CostLabel}" FontSize="18" FontWeight="SemiBold" Foreground="#22303A" />
+                            </StackPanel>
+                        </Border>
+                        <Border Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Расстояние" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,8,0,0" Text="{Binding DistanceLabel}" FontSize="18" FontWeight="SemiBold" Foreground="#22303A" />
+                            </StackPanel>
+                        </Border>
+                        <Border Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Создан" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,8,0,0" Text="{Binding CreatedAtLabel}" FontSize="16" FontWeight="SemiBold" Foreground="#22303A" />
+                            </StackPanel>
+                        </Border>
+                        <Border Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Обновлён" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,8,0,0" Text="{Binding UpdatedAtLabel}" FontSize="16" FontWeight="SemiBold" Foreground="#22303A" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <UniformGrid Columns="2">
+                        <Border Margin="0,0,12,12" Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Участники и груз" FontSize="17" FontWeight="SemiBold" Foreground="#22303A" />
+                                <TextBlock Margin="0,14,0,0" Text="Получатель" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,4,0,0" Text="{Binding ReceiverLabel}" FontSize="14" FontWeight="SemiBold" Foreground="#22303A" />
+                                <TextBlock Margin="0,12,0,0" Text="Водитель" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,4,0,0" Text="{Binding DriverLabel}" FontSize="14" FontWeight="SemiBold" Foreground="#22303A" />
+                                <TextBlock Margin="0,12,0,0" Text="Транспорт" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,4,0,0" Text="{Binding VehicleLabel}" FontSize="14" FontWeight="SemiBold" Foreground="#22303A" />
+                                <Separator Margin="0,14,0,14" />
+                                <TextBlock Text="Груз" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,4,0,0" Text="{Binding CargoName}" FontSize="15" FontWeight="SemiBold" Foreground="#22303A" />
+                                <TextBlock Margin="0,8,0,0" Text="{Binding CargoTypeLabel}" FontSize="13" Foreground="#0F5C69" />
+                                <TextBlock Margin="0,6,0,0" Text="{Binding CargoMetrics}" FontSize="13" Foreground="#5F6D79" />
+                                <TextBlock Margin="0,10,0,0" Text="{Binding CargoRequirements}" TextWrapping="Wrap" FontSize="13" Foreground="#5F6D79" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Margin="0,0,12,12" Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Маршрут и сроки" FontSize="17" FontWeight="SemiBold" Foreground="#22303A" />
+                                <TextBlock Margin="0,14,0,0" Text="{Binding PickupLabel}" TextWrapping="Wrap" LineHeight="21" FontSize="13" Foreground="#22303A" />
+                                <Separator Margin="0,14,0,14" />
+                                <TextBlock Text="{Binding DeliveryLabel}" TextWrapping="Wrap" LineHeight="21" FontSize="13" Foreground="#22303A" />
+                                <Separator Margin="0,14,0,14" />
+                                <TextBlock Text="Планирование" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,6,0,0" Text="{Binding ScheduleLabel}" TextWrapping="Wrap" LineHeight="21" FontSize="13" Foreground="#22303A" />
+                                <TextBlock Margin="0,14,0,0" Text="Комментарий" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,6,0,0" Text="{Binding CommentLabel}" TextWrapping="Wrap" LineHeight="21" FontSize="13" Foreground="#22303A" />
+                                <TextBlock Margin="0,14,0,0" Text="Причина отмены" FontSize="12" Foreground="#6A7784" />
+                                <TextBlock Margin="0,6,0,0" Text="{Binding CancellationLabel}" TextWrapping="Wrap" LineHeight="21" FontSize="13" Foreground="#22303A" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+                </StackPanel>
+            </ScrollViewer>
+
+            <StackPanel Grid.Column="1">
+                <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Действия" FontSize="17" FontWeight="SemiBold" Foreground="#22303A" />
+                        <TextBlock Margin="0,10,0,0" Text="{Binding StatusHint}" TextWrapping="Wrap" FontSize="13" Foreground="#687683" />
+                        <Button Margin="0,16,0,0"
+                                Height="42"
+                                Content="Принять заказ"
+                                Command="{Binding UpdateStatusCommand}"
+                                Visibility="{Binding CanDriverAccept, Converter={local:BooleanToVisibilityConverter}}" />
+                        <Button Margin="0,12,0,0"
+                                Height="42"
+                                Content="Начать погрузку"
+                                Command="{Binding UpdateStatusCommand}"
+                                Visibility="{Binding CanDriverLoad, Converter={local:BooleanToVisibilityConverter}}" />
+                        <Button Margin="0,12,0,0"
+                                Height="42"
+                                Content="Отправить в путь"
+                                Command="{Binding UpdateStatusCommand}"
+                                Visibility="{Binding CanDriverDispatch, Converter={local:BooleanToVisibilityConverter}}" />
+                        <Button Margin="0,12,0,0"
+                                Height="42"
+                                Content="Отметить доставку"
+                                Command="{Binding UpdateStatusCommand}"
+                                Visibility="{Binding CanDriverDeliver, Converter={local:BooleanToVisibilityConverter}}" />
+                        <Button Margin="0,12,0,0"
+                                Height="42"
+                                Content="Подтвердить получение"
+                                Command="{Binding UpdateStatusCommand}"
+                                Visibility="{Binding CanReceiverConfirm, Converter={local:BooleanToVisibilityConverter}}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Margin="0,18,0,0" Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="История изменений" FontSize="17" FontWeight="SemiBold" Foreground="#22303A" />
+                        <TextBlock Margin="0,8,0,0" Text="{Binding HistorySummary}" FontSize="12" Foreground="#6A7784" />
+                        <ScrollViewer Margin="0,16,0,0" VerticalScrollBarVisibility="Auto" Height="320">
+                            <ItemsControl ItemsSource="{Binding Timeline}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border Width="12"
+                                                    Height="12"
+                                                    Margin="0,6,12,0"
+                                                    Background="{Binding DotBackground}"
+                                                    CornerRadius="6"
+                                                    VerticalAlignment="Top" />
+
+                                            <Border Grid.Column="1"
+                                                    Padding="14"
+                                                    CornerRadius="16"
+                                                    Background="#F8FBFD"
+                                                    BorderBrush="#E8EEF2"
+                                                    BorderThickness="1">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="#22303A" />
+                                                    <TextBlock Margin="0,6,0,0" Text="{Binding Subtitle}" TextWrapping="Wrap" FontSize="12" Foreground="#5F6D79" />
+                                                    <TextBlock Margin="0,10,0,0" Text="{Binding Actor}" FontSize="12" Foreground="#0F5C69" />
+                                                    <TextBlock Margin="0,4,0,0" Text="{Binding Time}" FontSize="11" Foreground="#8A97A3" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Row="3"
+                    Margin="0,22,0,0"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right">
+            <Button Width="110"
+                    Content="Закрыть"
+                    Command="{Binding CloseCommand}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

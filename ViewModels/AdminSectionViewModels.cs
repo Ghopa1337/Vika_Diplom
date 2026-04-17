@@ -1,3 +1,4 @@
+using CargoTransport.Desktop.Models;
 using CargoTransport.Desktop.Services;
 using Microsoft.EntityFrameworkCore;
 using Sieve.Models;
@@ -670,12 +671,35 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
             ResetForm();
         }
     }
+
+    private async Task OpenDetailsAsync()
+    {
+        AdminOrderRowViewModel? SelectedOrder = null;
+        Action<Order>? _openOrderDetails = null;
+        if (SelectedOrder is null || _openOrderDetails is null)
+        {
+            return;
+        }
+
+        Order? order = await AdminCrudService.GetOrderDetailsAsync(SelectedOrder.Id);
+        if (order is null)
+        {
+            StatusMessage = "Карточка заказа не найдена.";
+            return;
+        }
+
+        _openOrderDetails(order);
+    }
+
 }
 
 public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
 {
+    private readonly Action<uint?>? _openOrderWizard;
+    private readonly Action<Order>? _openOrderDetails;
     private readonly AsyncRelayCommand _saveCommand;
     private readonly AsyncRelayCommand _deleteCommand;
+    private readonly AsyncRelayCommand _openDetailsCommand;
     private readonly AsyncRelayCommand _applyFilterCommand;
     private readonly RelayCommand _beginCreateCommand;
     private readonly RelayCommand _resetCommand;
@@ -709,14 +733,19 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
 
     public AdminOrdersSectionViewModel(
         IAdminCrudService adminCrudService,
-        Func<CancellationToken, Task> refreshPanelAsync)
+        Func<CancellationToken, Task> refreshPanelAsync,
+        Action<uint?>? openOrderWizard = null,
+        Action<Order>? openOrderDetails = null)
         : base(adminCrudService, refreshPanelAsync)
     {
+        _openOrderWizard = openOrderWizard;
+        _openOrderDetails = openOrderDetails;
         _beginCreateCommand = new RelayCommand(BeginCreate, () => !IsBusy);
         _saveCommand = new AsyncRelayCommand(SaveAsync, CanSave);
         _deleteCommand = new AsyncRelayCommand(DeleteAsync, () => !IsBusy && SelectedOrder is not null);
+        _openDetailsCommand = new AsyncRelayCommand(OpenDetailsAsync, () => !IsBusy && SelectedOrder is not null && _openOrderDetails is not null);
         _applyFilterCommand = new AsyncRelayCommand(RefreshPanelAsync, () => !IsBusy);
-        _resetCommand = new RelayCommand(ResetForm, () => !IsBusy);
+        _resetCommand = new RelayCommand(ResetSelectedOrClear, () => !IsBusy);
         _clearFilterCommand = new RelayCommand(ClearFilters, () => !IsBusy);
     }
 
@@ -764,6 +793,7 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
     public ICommand BeginCreateCommand => _beginCreateCommand;
     public ICommand SaveCommand => _saveCommand;
     public ICommand DeleteCommand => _deleteCommand;
+    public ICommand OpenDetailsCommand => _openDetailsCommand;
     public ICommand ResetCommand => _resetCommand;
     public ICommand ApplyFilterCommand => _applyFilterCommand;
     public ICommand ClearFilterCommand => _clearFilterCommand;
@@ -918,7 +948,11 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
         set => Set(ref _comment, value);
     }
 
-    public string FormTitle => EditingOrderId.HasValue ? "Редактирование заказа" : "Новый заказ";
+    public bool HasSelectedOrder => SelectedOrder is not null;
+    public string FormTitle => HasSelectedOrder ? "Карточка заказа" : "Создание заказа";
+    public string FormSubtitle => HasSelectedOrder
+        ? "Выбранный заказ можно скорректировать или удалить. Для нового заказа используйте пошаговый мастер."
+        : "Новые заказы создаются через мастер: получатель, груз, маршрут и назначение по шагам.";
 
     public override async Task LoadLookupsAsync(CancellationToken cancellationToken = default)
     {
@@ -1020,6 +1054,9 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
             case nameof(SelectedOrder):
                 _deleteArmedOrderId = null;
                 FillForm(SelectedOrder);
+                OnPropertyChanged(nameof(HasSelectedOrder));
+                OnPropertyChanged(nameof(FormTitle));
+                OnPropertyChanged(nameof(FormSubtitle));
                 RaiseCommandStates();
                 break;
             case nameof(EditingOrderId):
@@ -1041,6 +1078,7 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
         _beginCreateCommand.RaiseCanExecuteChanged();
         _saveCommand.RaiseCanExecuteChanged();
         _deleteCommand.RaiseCanExecuteChanged();
+        _openDetailsCommand.RaiseCanExecuteChanged();
         _applyFilterCommand.RaiseCanExecuteChanged();
         _resetCommand.RaiseCanExecuteChanged();
         _clearFilterCommand.RaiseCanExecuteChanged();
@@ -1060,7 +1098,15 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
     {
         SelectedOrder = null;
         ResetForm();
-        StatusMessage = "Заполни заказ. Номер можно оставить пустым, он сгенерируется сам.";
+
+        if (_openOrderWizard is null)
+        {
+            StatusMessage = "Мастер заказа сейчас недоступен.";
+            return;
+        }
+
+        StatusMessage = "Открыт пошаговый мастер создания заказа.";
+        _openOrderWizard(null);
     }
 
     private void ResetForm()
@@ -1085,6 +1131,19 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
         CancellationReason = string.Empty;
         Comment = string.Empty;
         _deleteArmedOrderId = null;
+    }
+
+    private void ResetSelectedOrClear()
+    {
+        if (SelectedOrder is not null)
+        {
+            FillForm(SelectedOrder);
+            StatusMessage = "Карточка заказа восстановлена из выбранной строки.";
+            return;
+        }
+
+        ResetForm();
+        StatusMessage = "Форма очищена. Для нового заказа откройте мастер.";
     }
 
     private void FillForm(AdminOrderRowViewModel? order)
@@ -1118,6 +1177,7 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
 
     private bool CanSave() =>
         !IsBusy
+        && EditingOrderId.HasValue
         && SelectedReceiverUserId is > 0
         && SelectedCargoId is > 0
         && !string.IsNullOrWhiteSpace(PickupAddress)
@@ -1158,16 +1218,13 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
             CancellationReason,
             Comment);
 
-        if (EditingOrderId.HasValue)
+        if (!EditingOrderId.HasValue)
         {
-            await ExecuteCrudAsync(() => AdminCrudService.UpdateOrderAsync(data), "Заказ обновлен.");
+            StatusMessage = "Для создания нового заказа используйте пошаговый мастер.";
             return;
         }
 
-        if (await ExecuteCrudAsync(() => AdminCrudService.CreateOrderAsync(data), "Заказ создан."))
-        {
-            ResetForm();
-        }
+        await ExecuteCrudAsync(() => AdminCrudService.UpdateOrderAsync(data), "Заказ обновлен.");
     }
 
     private async Task DeleteAsync()
@@ -1191,6 +1248,22 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
         }
     }
 
+    private async Task OpenDetailsAsync()
+    {
+        if (SelectedOrder is null || _openOrderDetails is null)
+        {
+            return;
+        }
+
+        Order? order = await AdminCrudService.GetOrderDetailsAsync(SelectedOrder.Id);
+        if (order is null)
+        {
+            StatusMessage = "Карточка заказа не найдена.";
+            return;
+        }
+
+        _openOrderDetails(order);
+    }
 }
 
 public sealed class AdminDriversSectionViewModel : AdminEditableSectionViewModel

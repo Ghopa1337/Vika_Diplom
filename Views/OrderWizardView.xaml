@@ -1,0 +1,270 @@
+<UserControl x:Class="CargoTransport.Desktop.Views.OrderWizardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:CargoTransport.Desktop.ViewModels"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:DesignHeight="640"
+             d:DesignWidth="860">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Margin="0,0,0,20">
+            <TextBlock Text="Пошаговое создание заказа"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Foreground="#22303A" />
+            <TextBlock Margin="0,8,0,0"
+                       Text="Сценарий заменяет ручное создание через CRUD-форму: сначала груз, затем маршрут и только потом назначение."
+                       FontSize="13"
+                       TextWrapping="Wrap"
+                       Foreground="#687683" />
+
+            <StackPanel Margin="0,20,0,0"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center">
+                <StackPanel Width="120">
+                    <Ellipse Width="34"
+                             Height="34"
+                             HorizontalAlignment="Center"
+                             Fill="{Binding CurrentStep, Converter={local:StepToColorConverter}, ConverterParameter=1}"
+                             Stroke="#0F5C69"
+                             StrokeThickness="2" />
+                    <TextBlock Margin="0,10,0,0"
+                               Text="Груз"
+                               HorizontalAlignment="Center"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="#50606D" />
+                </StackPanel>
+
+                <Rectangle Width="56"
+                           Height="2"
+                           VerticalAlignment="Center"
+                           Fill="#C8D6DF" />
+
+                <StackPanel Width="120">
+                    <Ellipse Width="34"
+                             Height="34"
+                             HorizontalAlignment="Center"
+                             Fill="{Binding CurrentStep, Converter={local:StepToColorConverter}, ConverterParameter=2}"
+                             Stroke="#0F5C69"
+                             StrokeThickness="2" />
+                    <TextBlock Margin="0,10,0,0"
+                               Text="Маршрут"
+                               HorizontalAlignment="Center"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="#50606D" />
+                </StackPanel>
+
+                <Rectangle Width="56"
+                           Height="2"
+                           VerticalAlignment="Center"
+                           Fill="#C8D6DF" />
+
+                <StackPanel Width="120">
+                    <Ellipse Width="34"
+                             Height="34"
+                             HorizontalAlignment="Center"
+                             Fill="{Binding CurrentStep, Converter={local:StepToColorConverter}, ConverterParameter=3}"
+                             Stroke="#0F5C69"
+                             StrokeThickness="2" />
+                    <TextBlock Margin="0,10,0,0"
+                               Text="Назначение"
+                               HorizontalAlignment="Center"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="#50606D" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+
+        <Border Grid.Row="1"
+                CornerRadius="24"
+                Background="#F8FBFD"
+                BorderBrush="#E6EEF3"
+                BorderThickness="1">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid Margin="22">
+                    <StackPanel Visibility="{Binding CurrentStep, Converter={local:StepToVisibilityConverter}, ConverterParameter=1}">
+                        <TextBlock Text="Шаг 1. Получатель и груз"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   Foreground="#22303A" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="Выберите получателя и заполните параметры нового груза. При необходимости можно взять уже существующий груз из справочника."
+                                   FontSize="13"
+                                   TextWrapping="Wrap"
+                                   Foreground="#687683" />
+
+                        <ComboBox Margin="0,18,0,0"
+                                  SelectedValue="{Binding SelectedReceiverUserId}"
+                                  SelectedValuePath="Id"
+                                  DisplayMemberPath="DisplayName"
+                                  ItemsSource="{Binding ReceiverOptions}"
+                                  materialDesign:HintAssist.Hint="Получатель" />
+
+                        <CheckBox Margin="0,18,0,0"
+                                  Content="Создать новый груз"
+                                  IsChecked="{Binding IsNewCargo}" />
+
+                        <StackPanel Margin="0,18,0,0"
+                                    Visibility="{Binding IsNewCargo, Converter={local:BooleanToVisibilityConverter}}">
+                            <UniformGrid Columns="2">
+                                <TextBox Margin="0,0,10,10"
+                                         Text="{Binding CargoName, UpdateSourceTrigger=PropertyChanged}"
+                                         materialDesign:HintAssist.Hint="Наименование груза" />
+                                <ComboBox Margin="0,0,10,10"
+                                          SelectedValue="{Binding SelectedCargoType}"
+                                          SelectedValuePath="Tag"
+                                          materialDesign:HintAssist.Hint="Тип груза">
+                                    <ComboBoxItem Content="Обычный" Tag="normal" />
+                                    <ComboBoxItem Content="Опасный" Tag="hazardous" />
+                                    <ComboBoxItem Content="Скоропортящийся" Tag="perishable" />
+                                    <ComboBoxItem Content="Крупногабаритный" Tag="oversized" />
+                                </ComboBox>
+                                <TextBox Margin="0,0,10,10"
+                                         Text="{Binding CargoWeight, UpdateSourceTrigger=PropertyChanged}"
+                                         materialDesign:HintAssist.Hint="Вес, кг" />
+                                <TextBox Margin="0,0,10,10"
+                                         Text="{Binding CargoVolume, UpdateSourceTrigger=PropertyChanged}"
+                                         materialDesign:HintAssist.Hint="Объём, м3" />
+                            </UniformGrid>
+
+                            <TextBox Height="84"
+                                     Text="{Binding SpecialRequirements, UpdateSourceTrigger=PropertyChanged}"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     materialDesign:HintAssist.Hint="Особые требования к перевозке" />
+                        </StackPanel>
+
+                        <StackPanel Margin="0,18,0,0"
+                                    Visibility="{Binding IsNewCargo, Converter={local:InverseBooleanToVisibilityConverter}}">
+                            <ComboBox SelectedValue="{Binding SelectedExistingCargoId}"
+                                      SelectedValuePath="Id"
+                                      DisplayMemberPath="DisplayName"
+                                      ItemsSource="{Binding CargoOptions}"
+                                      materialDesign:HintAssist.Hint="Груз из справочника" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding CurrentStep, Converter={local:StepToVisibilityConverter}, ConverterParameter=2}">
+                        <TextBlock Text="Шаг 2. Маршрут и контакты"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   Foreground="#22303A" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="Заполните точки маршрута, контактных лиц и при необходимости укажите плановые даты."
+                                   FontSize="13"
+                                   TextWrapping="Wrap"
+                                   Foreground="#687683" />
+
+                        <UniformGrid Margin="0,18,0,0" Columns="2">
+                            <TextBox Margin="0,0,10,10"
+                                     Text="{Binding PickupAddress, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Адрес погрузки" />
+                            <TextBox Margin="0,0,10,10"
+                                     Text="{Binding DeliveryAddress, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Адрес доставки" />
+                            <TextBox Margin="0,0,10,10"
+                                     Text="{Binding PickupContactName, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Контакт на погрузке" />
+                            <TextBox Margin="0,0,10,10"
+                                     Text="{Binding DeliveryContactName, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Контакт на доставке" />
+                            <TextBox Margin="0,0,10,10"
+                                     Text="{Binding PickupContactPhone, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Телефон погрузки" />
+                            <TextBox Margin="0,0,10,10"
+                                     Text="{Binding DeliveryContactPhone, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Телефон доставки" />
+                            <DatePicker Margin="0,0,10,10"
+                                        SelectedDate="{Binding PlannedPickupAt}"
+                                        materialDesign:HintAssist.Hint="План погрузки" />
+                            <DatePicker Margin="0,0,10,10"
+                                        SelectedDate="{Binding DesiredDeliveryAt}"
+                                        materialDesign:HintAssist.Hint="Желаемая доставка" />
+                        </UniformGrid>
+
+                        <TextBox Height="84"
+                                 Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 materialDesign:HintAssist.Hint="Комментарий к заказу" />
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding CurrentStep, Converter={local:StepToVisibilityConverter}, ConverterParameter=3}">
+                        <TextBlock Text="Шаг 3. Расчёт и назначение"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   Foreground="#22303A" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="Укажите стоимость и при необходимости сразу закрепите экипаж. Если выбрать и водителя, и транспорт, заказ будет создан со статусом 'Назначен'."
+                                   FontSize="13"
+                                   TextWrapping="Wrap"
+                                   Foreground="#687683" />
+
+                        <UniformGrid Margin="0,18,0,0" Columns="2">
+                            <TextBox Margin="0,0,10,10"
+                                     Text="{Binding DistanceKm, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Расстояние, км" />
+                            <TextBox Margin="0,0,10,10"
+                                     Text="{Binding TotalCost, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Стоимость перевозки" />
+                            <ComboBox Margin="0,0,10,10"
+                                      SelectedValue="{Binding SelectedDriverId}"
+                                      SelectedValuePath="Id"
+                                      DisplayMemberPath="DisplayName"
+                                      ItemsSource="{Binding DriverOptions}"
+                                      materialDesign:HintAssist.Hint="Водитель" />
+                            <ComboBox Margin="0,0,10,10"
+                                      SelectedValue="{Binding SelectedVehicleId}"
+                                      SelectedValuePath="Id"
+                                      DisplayMemberPath="DisplayName"
+                                      ItemsSource="{Binding VehicleOptions}"
+                                      materialDesign:HintAssist.Hint="Транспорт" />
+                        </UniformGrid>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+
+        <Grid Grid.Row="2" Margin="0,18,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock VerticalAlignment="Center"
+                       Text="{Binding StatusMessage}"
+                       TextWrapping="Wrap"
+                       Foreground="#0F5C69" />
+
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <Button Width="110"
+                        Margin="0,0,10,0"
+                        Command="{Binding BackCommand}"
+                        Content="Назад" />
+                <Button Width="110"
+                        Margin="0,0,10,0"
+                        Command="{Binding NextCommand}"
+                        Content="Далее"
+                        Visibility="{Binding CurrentStep, Converter={local:StepToVisibilityConverter}, ConverterParameter=NotLast}" />
+                <Button Width="160"
+                        Background="#D8F3E3"
+                        Command="{Binding CompleteCommand}"
+                        Content="Создать заказ"
+                        Visibility="{Binding CurrentStep, Converter={local:StepToVisibilityConverter}, ConverterParameter=3}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>
