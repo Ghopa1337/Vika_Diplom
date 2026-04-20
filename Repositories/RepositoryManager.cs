@@ -13,6 +13,8 @@ public interface IRepositoryManager : IAsyncDisposable, IDisposable
     ICargoRepository Cargo { get; }
     IOrderRepository Order { get; }
     IOrderStatusHistoryRepository OrderStatusHistory { get; }
+    INotificationRepository Notification { get; }
+    IPasswordHistoryRepository PasswordHistory { get; }
     IActivityLogRepository ActivityLog { get; }
     IReportRepository Report { get; }
     Task SaveAsync(CancellationToken cancellationToken = default);
@@ -30,6 +32,8 @@ public sealed class RepositoryManager : IRepositoryManager
     private ICargoRepository? _cargoRepository;
     private IOrderRepository? _orderRepository;
     private IOrderStatusHistoryRepository? _orderStatusHistoryRepository;
+    private INotificationRepository? _notificationRepository;
+    private IPasswordHistoryRepository? _passwordHistoryRepository;
     private IActivityLogRepository? _activityLogRepository;
     private IReportRepository? _reportRepository;
 
@@ -46,6 +50,8 @@ public sealed class RepositoryManager : IRepositoryManager
     public ICargoRepository Cargo => _cargoRepository ??= new CargoRepository(_context);
     public IOrderRepository Order => _orderRepository ??= new OrderRepository(_context);
     public IOrderStatusHistoryRepository OrderStatusHistory => _orderStatusHistoryRepository ??= new OrderStatusHistoryRepository(_context);
+    public INotificationRepository Notification => _notificationRepository ??= new NotificationRepository(_context);
+    public IPasswordHistoryRepository PasswordHistory => _passwordHistoryRepository ??= new PasswordHistoryRepository(_context);
     public IActivityLogRepository ActivityLog => _activityLogRepository ??= new ActivityLogRepository(_context);
     public IReportRepository Report => _reportRepository ??= new ReportRepository(_context);
 

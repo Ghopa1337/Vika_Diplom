@@ -11,6 +11,8 @@ public sealed class OrderWizardViewModel : ViewModelBase
 {
     private readonly IAdminCrudService _adminCrudService;
     private readonly Func<Task> _onCompleted;
+    private readonly bool _lockReceiver;
+    private readonly bool _allowAssignment;
     private int _currentStep = 1;
 
     private uint? _selectedReceiverUserId;
@@ -39,10 +41,14 @@ public sealed class OrderWizardViewModel : ViewModelBase
     public OrderWizardViewModel(
         IAdminCrudService adminCrudService,
         Func<Task> onCompleted,
-        uint? initialReceiverUserId = null)
+        uint? initialReceiverUserId = null,
+        bool lockReceiver = false,
+        bool allowAssignment = true)
     {
         _adminCrudService = adminCrudService;
         _onCompleted = onCompleted;
+        _lockReceiver = lockReceiver;
+        _allowAssignment = allowAssignment;
         _selectedReceiverUserId = initialReceiverUserId;
 
         NextCommand = new RelayCommand(GoNext, CanGoNext);
@@ -194,6 +200,9 @@ public sealed class OrderWizardViewModel : ViewModelBase
         set => Set(ref _statusMessage, value);
     }
 
+    public bool IsReceiverSelectionEnabled => !_lockReceiver;
+    public bool IsAssignmentVisible => _allowAssignment;
+
     public ObservableCollection<AdminLookupItemViewModel> ReceiverOptions { get; } = [];
     public ObservableCollection<AdminLookupItemViewModel> CargoOptions { get; } = [];
     public ObservableCollection<AdminLookupItemViewModel> DriverOptions { get; } = [];
@@ -262,7 +271,9 @@ public sealed class OrderWizardViewModel : ViewModelBase
     private bool CanComplete() =>
         CurrentStep == 3
         && SelectedReceiverUserId is > 0
-        && !string.IsNullOrWhiteSpace(TotalCost);
+        && CanCompleteCargoStep()
+        && !string.IsNullOrWhiteSpace(PickupAddress)
+        && !string.IsNullOrWhiteSpace(DeliveryAddress);
 
     private bool CanCompleteCargoStep()
     {
@@ -309,7 +320,7 @@ public sealed class OrderWizardViewModel : ViewModelBase
             return false;
         }
 
-        if (!AdminParsingHelper.TryParseRequiredDecimal(TotalCost, out decimal totalCost, out errorMessage))
+        if (!AdminParsingHelper.TryParseNullableDecimal(TotalCost, out decimal? totalCost, out errorMessage))
         {
             return false;
         }
@@ -319,7 +330,10 @@ public sealed class OrderWizardViewModel : ViewModelBase
             return false;
         }
 
-        if (SelectedDriverId is > 0 ^ SelectedVehicleId is > 0)
+        bool hasDriver = _allowAssignment && SelectedDriverId is > 0;
+        bool hasVehicle = _allowAssignment && SelectedVehicleId is > 0;
+
+        if (hasDriver ^ hasVehicle)
         {
             errorMessage = "Для назначения на этапе создания выберите и водителя, и транспорт.";
             return false;
@@ -362,7 +376,7 @@ public sealed class OrderWizardViewModel : ViewModelBase
             cargoId = SelectedExistingCargoId.Value;
         }
 
-        string status = SelectedDriverId is > 0 && SelectedVehicleId is > 0
+        string status = hasDriver && hasVehicle
             ? Order.OrderStatuses.Assigned
             : Order.OrderStatuses.Created;
 
@@ -371,8 +385,8 @@ public sealed class OrderWizardViewModel : ViewModelBase
             string.Empty,
             SelectedReceiverUserId.Value,
             cargoId,
-            SelectedDriverId is > 0 ? SelectedDriverId : null,
-            SelectedVehicleId is > 0 ? SelectedVehicleId : null,
+            hasDriver ? SelectedDriverId : null,
+            hasVehicle ? SelectedVehicleId : null,
             PickupAddress.Trim(),
             DeliveryAddress.Trim(),
             string.IsNullOrWhiteSpace(PickupContactName) ? null : PickupContactName.Trim(),

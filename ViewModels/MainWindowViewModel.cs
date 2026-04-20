@@ -30,6 +30,10 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly RoleOrdersSectionViewModel _driverOrdersSection;
     private readonly RoleChecklistSectionViewModel _driverProfileSection;
     private readonly RoleChecklistSectionViewModel _driverNotificationsSection;
+    private readonly UserProfileSectionViewModel _receiverSelfProfileSection;
+    private readonly UserNotificationsSectionViewModel _receiverSelfNotificationsSection;
+    private readonly UserProfileSectionViewModel _driverSelfProfileSection;
+    private readonly UserNotificationsSectionViewModel _driverSelfNotificationsSection;
 
     private readonly AdminNavigationItemViewModel _dashboardNavigationItem;
     private readonly AdminNavigationItemViewModel _usersNavigationItem;
@@ -56,22 +60,25 @@ public sealed class MainWindowViewModel : ViewModelBase
     private AdminNavigationItemViewModel? _selectedNavigationItem;
     private bool _isInitialized;
     private object? _activeModalContent;
+    private readonly RelayCommand _closeModalCommand;
 
     public MainWindowViewModel(
         IAuthStateService authStateService,
         IAdminPanelService adminPanelService,
         IAdminCrudService adminCrudService,
-        IRoleOrderWorkspaceService roleOrderWorkspaceService)
+        IRoleOrderWorkspaceService roleOrderWorkspaceService,
+        IUserSelfService userSelfService)
     {
         _authStateService = authStateService;
         _adminPanelService = adminPanelService;
         _adminCrudService = adminCrudService;
         _roleOrderWorkspaceService = roleOrderWorkspaceService;
         _authStateService.AuthStateChanged += HandleAuthStateChanged;
+        _closeModalCommand = new RelayCommand(CloseModal, () => ActiveModalContent is not null);
 
         _dashboardSection = new AdminDashboardSectionViewModel();
         _usersSection = new AdminUsersSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
-        _ordersSection = new AdminOrdersSectionViewModel(_adminCrudService, ReloadAdminPanelAsync, OpenOrderWizard, OpenOrderDetails);
+        _ordersSection = new AdminOrdersSectionViewModel(_adminCrudService, ReloadAdminPanelAsync, receiverId => OpenOrderWizard(receiverId), OpenOrderDetails);
         _cargoSection = new AdminCargoSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
         _driversSection = new AdminDriversSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
         _vehiclesSection = new AdminVehiclesSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
@@ -96,7 +103,8 @@ public sealed class MainWindowViewModel : ViewModelBase
             _roleOrderWorkspaceService,
             RoleOrderCabinetMode.Receiver,
             OpenOrderDetails,
-            UpdateSelfServiceShellAsync);
+            UpdateSelfServiceShellAsync,
+            OpenReceiverOrderWizard);
         _receiverProfileSection = new RoleChecklistSectionViewModel(
             "Профиль получателя",
             "Личный раздел под контактные данные, компанию и будущую смену пароля.",
@@ -140,6 +148,27 @@ public sealed class MainWindowViewModel : ViewModelBase
                 new RoleChecklistItemViewModel("Изменения маршрута", "Уведомления о переносе, отмене и смене статуса.", "Запланировано")
             ]);
 
+        _receiverSelfProfileSection = new UserProfileSectionViewModel(
+            userSelfService,
+            "Профиль получателя",
+            "Контактные данные, организация и отдельная смена пароля для текущей учетной записи.",
+            RefreshSelfServiceShellAsync);
+        _receiverSelfNotificationsSection = new UserNotificationsSectionViewModel(
+            userSelfService,
+            "Центр уведомлений",
+            "Лента входящих событий по заказам, безопасности и системным сообщениям получателя.",
+            RefreshSelfServiceShellAsync);
+        _driverSelfProfileSection = new UserProfileSectionViewModel(
+            userSelfService,
+            "Профиль водителя",
+            "Личные контакты, данные учетной записи и отдельная смена пароля водителя.",
+            RefreshSelfServiceShellAsync);
+        _driverSelfNotificationsSection = new UserNotificationsSectionViewModel(
+            userSelfService,
+            "Центр уведомлений",
+            "Новые назначения, изменения рейсов и системные сообщения для водителя.",
+            RefreshSelfServiceShellAsync);
+
         _dashboardNavigationItem = new AdminNavigationItemViewModel("Дашборд", "Оперативная сводка по системе и последним действиям", "0", _dashboardSection);
         _usersNavigationItem = new AdminNavigationItemViewModel("Пользователи", "Управление учетными записями и ролями", "0", _usersSection);
         _ordersNavigationItem = new AdminNavigationItemViewModel("Заказы", "Фильтрация, карточки и контроль статусов перевозок", "0", _ordersSection);
@@ -155,12 +184,12 @@ public sealed class MainWindowViewModel : ViewModelBase
         _dispatcherReportsNavigationItem = new AdminNavigationItemViewModel("Отчеты", "Оперативные сводки по смене и работе парка", "0", _reportsSection);
         _receiverDashboardNavigationItem = new AdminNavigationItemViewModel("Обзор", "Персональная сводка по доставкам и входящим событиям", "роль", _receiverDashboardSection);
         _receiverOrdersNavigationItem = new AdminNavigationItemViewModel("Мои заказы", "Личный кабинет получателя с карточками доставок", "скоро", _receiverOrdersSection);
-        _receiverProfileNavigationItem = new AdminNavigationItemViewModel("Профиль", "Контакты, компания и настройки учетной записи", "скоро", _receiverProfileSection);
-        _receiverNotificationsNavigationItem = new AdminNavigationItemViewModel("Уведомления", "События по заказам и подтверждениям", "скоро", _receiverNotificationsSection);
+        _receiverProfileNavigationItem = new AdminNavigationItemViewModel("Профиль", "Контакты, компания и настройки учетной записи", "скоро", _receiverSelfProfileSection);
+        _receiverNotificationsNavigationItem = new AdminNavigationItemViewModel("Уведомления", "События по заказам и подтверждениям", "скоро", _receiverSelfNotificationsSection);
         _driverDashboardNavigationItem = new AdminNavigationItemViewModel("Обзор", "Персональная сводка по рейсам и рабочим событиям", "роль", _driverDashboardSection);
         _driverOrdersNavigationItem = new AdminNavigationItemViewModel("Мои рейсы", "Назначенные перевозки и рабочие статусы водителя", "скоро", _driverOrdersSection);
-        _driverProfileNavigationItem = new AdminNavigationItemViewModel("Профиль", "Личные данные, ВУ и настройки учетной записи", "скоро", _driverProfileSection);
-        _driverNotificationsNavigationItem = new AdminNavigationItemViewModel("Уведомления", "Новые назначения и изменения по маршрутам", "скоро", _driverNotificationsSection);
+        _driverProfileNavigationItem = new AdminNavigationItemViewModel("Профиль", "Личные данные, ВУ и настройки учетной записи", "скоро", _driverSelfProfileSection);
+        _driverNotificationsNavigationItem = new AdminNavigationItemViewModel("Уведомления", "Новые назначения и изменения по маршрутам", "скоро", _driverSelfNotificationsSection);
 
         NavigationItems = [];
         ConfigureShellForCurrentRole();
@@ -178,8 +207,15 @@ public sealed class MainWindowViewModel : ViewModelBase
     public object? ActiveModalContent
     {
         get => _activeModalContent;
-        set => Set(ref _activeModalContent, value);
+        set
+        {
+            if (Set(ref _activeModalContent, value))
+            {
+                _closeModalCommand.RaiseCanExecuteChanged();
+            }
+        }
     }
+    public RelayCommand CloseModalCommand => _closeModalCommand;
 
     public string ShellTitle => CurrentRoleCode switch
     {
@@ -243,6 +279,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (CurrentRoleCode == "receiver")
         {
             await _receiverOrdersSection.LoadAsync(cancellationToken);
+            await _receiverSelfProfileSection.LoadAsync();
+            await _receiverSelfNotificationsSection.LoadAsync();
             await UpdateSelfServiceShellAsync();
             return;
         }
@@ -250,6 +288,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (CurrentRoleCode == "driver")
         {
             await _driverOrdersSection.LoadAsync(cancellationToken);
+            await _driverSelfProfileSection.LoadAsync();
+            await _driverSelfNotificationsSection.LoadAsync();
             await UpdateSelfServiceShellAsync();
             return;
         }
@@ -304,7 +344,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             ]);
     }
 
-    public void OpenOrderWizard(uint? receiverId = null)
+    public void OpenOrderWizard(uint? receiverId = null, bool lockReceiver = false, bool allowAssignment = true)
     {
         var wizard = new OrderWizardViewModel(
             _adminCrudService,
@@ -313,10 +353,32 @@ public sealed class MainWindowViewModel : ViewModelBase
                 ActiveModalContent = null;
                 await ReloadAdminPanelAsync();
             },
-            receiverId);
+            receiverId,
+            lockReceiver,
+            allowAssignment);
 
-        _ = wizard.LoadLookupsAsync();
         ActiveModalContent = wizard;
+        _ = LoadOrderWizardAsync(wizard);
+    }
+
+    private async Task LoadOrderWizardAsync(OrderWizardViewModel wizard)
+    {
+        try
+        {
+            await wizard.LoadLookupsAsync();
+        }
+        catch (Exception ex)
+        {
+            wizard.StatusMessage = $"Не удалось загрузить справочники для создания заказа: {ex.Message}";
+        }
+    }
+
+    private void CloseModal() => ActiveModalContent = null;
+
+    private void OpenReceiverOrderWizard()
+    {
+        uint? receiverId = _authStateService.CurrentUser?.Id;
+        OpenOrderWizard(receiverId, lockReceiver: true, allowAssignment: false);
     }
 
     public void OpenOrderDetails(Order order)
@@ -393,6 +455,20 @@ public sealed class MainWindowViewModel : ViewModelBase
         SelectedNavigationItem = NavigationItems.FirstOrDefault(x => x.Title == currentTitle) ?? NavigationItems.FirstOrDefault();
     }
 
+    private async Task RefreshSelfServiceShellAsync()
+    {
+        if (CurrentRoleCode == "receiver")
+        {
+            await _receiverSelfNotificationsSection.LoadAsync();
+        }
+        else if (CurrentRoleCode == "driver")
+        {
+            await _driverSelfNotificationsSection.LoadAsync();
+        }
+
+        await UpdateSelfServiceShellAsync();
+    }
+
     private Task UpdateSelfServiceShellAsync()
     {
         _receiverDashboardSection.Apply(
@@ -405,12 +481,12 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         _receiverDashboardNavigationItem.Badge = $"{_receiverOrdersSection.TotalOrdersCount}";
         _receiverOrdersNavigationItem.Badge = $"{_receiverOrdersSection.AwaitingActionCount}";
-        _receiverProfileNavigationItem.Badge = "профиль";
-        _receiverNotificationsNavigationItem.Badge = "скоро";
+        _receiverProfileNavigationItem.Badge = _receiverSelfProfileSection.MustChangePassword ? "пароль" : "профиль";
+        _receiverNotificationsNavigationItem.Badge = $"{_receiverSelfNotificationsSection.UnreadCount}";
         _driverDashboardNavigationItem.Badge = $"{_driverOrdersSection.TotalOrdersCount}";
         _driverOrdersNavigationItem.Badge = $"{_driverOrdersSection.AwaitingActionCount}";
-        _driverProfileNavigationItem.Badge = "профиль";
-        _driverNotificationsNavigationItem.Badge = "скоро";
+        _driverProfileNavigationItem.Badge = _driverSelfProfileSection.MustChangePassword ? "пароль" : "профиль";
+        _driverNotificationsNavigationItem.Badge = $"{_driverSelfNotificationsSection.UnreadCount}";
 
         return Task.CompletedTask;
     }

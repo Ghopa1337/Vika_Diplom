@@ -26,6 +26,7 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
     private readonly IRoleOrderWorkspaceService _roleOrderWorkspaceService;
     private readonly RoleOrderCabinetMode _mode;
     private readonly Action<Order> _openOrderDetails;
+    private readonly Action? _createOrder;
     private readonly Func<Task> _onOrdersStateChanged;
     private readonly List<Order> _allOrders = [];
 
@@ -39,16 +40,19 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
         IRoleOrderWorkspaceService roleOrderWorkspaceService,
         RoleOrderCabinetMode mode,
         Action<Order> openOrderDetails,
-        Func<Task> onOrdersStateChanged)
+        Func<Task> onOrdersStateChanged,
+        Action? createOrder = null)
     {
         _roleOrderWorkspaceService = roleOrderWorkspaceService;
         _mode = mode;
         _openOrderDetails = openOrderDetails;
+        _createOrder = createOrder;
         _onOrdersStateChanged = onOrdersStateChanged;
 
         ApplyFilterCommand = new RelayCommand(ApplyFilters, () => !IsBusy);
         ClearFilterCommand = new RelayCommand(ClearFilters, () => !IsBusy);
         RefreshCommand = new AsyncRelayCommand(RefreshAsync, () => !IsBusy);
+        CreateOrderCommand = new RelayCommand(CreateOrder, () => CanCreateOrder && !IsBusy);
         OpenDetailsCommand = new RelayCommand(OpenDetails, () => SelectedOrder is not null);
         AcceptCommand = new AsyncRelayCommand(() => ExecuteActionAsync(RoleOrderAction.Accept), () => CanAccept);
         RefuseCommand = new AsyncRelayCommand(() => ExecuteActionAsync(RoleOrderAction.Refuse), () => CanRefuse);
@@ -113,6 +117,7 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
     public RelayCommand ApplyFilterCommand { get; }
     public RelayCommand ClearFilterCommand { get; }
     public AsyncRelayCommand RefreshCommand { get; }
+    public RelayCommand CreateOrderCommand { get; }
     public RelayCommand OpenDetailsCommand { get; }
     public AsyncRelayCommand AcceptCommand { get; }
     public AsyncRelayCommand RefuseCommand { get; }
@@ -125,6 +130,7 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
     public bool CanStartLoading => IsDriverMode && SelectedOrder?.StatusCode == Order.OrderStatuses.Accepted;
     public bool CanMarkDelivered => IsDriverMode && SelectedOrder?.StatusCode is Order.OrderStatuses.Accepted or Order.OrderStatuses.Loading or Order.OrderStatuses.InTransit;
     public bool CanConfirmReceipt => IsReceiverMode && SelectedOrder?.StatusCode == Order.OrderStatuses.Delivered;
+    public bool CanCreateOrder => IsReceiverMode && _createOrder is not null;
 
     public int TotalOrdersCount => _allOrders.Count;
     public int ActiveOrdersCount => _allOrders.Count(x => x.Status is not (Order.OrderStatuses.Received or Order.OrderStatuses.Cancelled));
@@ -157,6 +163,7 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
                 ApplyFilterCommand.RaiseCanExecuteChanged();
                 ClearFilterCommand.RaiseCanExecuteChanged();
                 RefreshCommand.RaiseCanExecuteChanged();
+                CreateOrderCommand.RaiseCanExecuteChanged();
                 RaiseActionStates();
                 break;
         }
@@ -307,6 +314,8 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
 
         _openOrderDetails(SelectedOrder.Order);
     }
+
+    private void CreateOrder() => _createOrder?.Invoke();
 
     private async Task ExecuteActionAsync(RoleOrderAction action)
     {

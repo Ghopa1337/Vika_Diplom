@@ -650,9 +650,10 @@ public sealed class AdminCrudService : IAdminCrudService
             NewStatus = order.Status,
             ChangedByUserId = GetCurrentUserId(),
             ChangedAt = DateTime.Now,
-            Comment = "Заказ создан администратором"
+            Comment = GetOrderCreatedHistoryComment()
         });
 
+        await CreateOrderNotificationsAsync(order, cancellationToken);
         await _repositoryManager.SaveAsync(cancellationToken);
         await LogAsync("order", order.Id, "order_created", $"Создан заказ {order.OrderNumber}", cancellationToken);
     }
@@ -747,6 +748,49 @@ public sealed class AdminCrudService : IAdminCrudService
 
         await _repositoryManager.SaveAsync(cancellationToken);
         _repositoryManager.Clear();
+    }
+
+    private async Task CreateOrderNotificationsAsync(Order order, CancellationToken cancellationToken)
+    {
+        DateTime now = DateTime.Now;
+        _repositoryManager.Notification.CreateNotification(new Notification
+        {
+            UserId = order.ReceiverUserId,
+            Title = $"Заказ {order.OrderNumber} создан",
+            Message = "Заявка на перевозку создана и ожидает обработки диспетчером.",
+            NotificationType = "order",
+            IsRead = false,
+            CreatedAt = now
+        });
+
+        if (order.DriverId.HasValue)
+        {
+            Driver? driver = await _repositoryManager.Driver.GetDriverByIdWithUserAsync(order.DriverId.Value, trackChanges: false, cancellationToken);
+            if (driver is not null)
+            {
+                _repositoryManager.Notification.CreateNotification(new Notification
+                {
+                    UserId = driver.UserId,
+                    Title = $"Назначен заказ {order.OrderNumber}",
+                    Message = "Вам назначен новый рейс. Проверьте детали маршрута в разделе «Мои рейсы».",
+                    NotificationType = "order",
+                    IsRead = false,
+                    CreatedAt = now
+                });
+            }
+        }
+    }
+
+    private string GetOrderCreatedHistoryComment()
+    {
+        string roleCode = _authStateService.CurrentUser?.RoleCode ?? string.Empty;
+
+        return roleCode switch
+        {
+            "receiver" => "Заказ создан получателем",
+            "dispatcher" => "Заказ создан диспетчером",
+            _ => "Заказ создан администратором"
+        };
     }
 
     private uint GetCurrentUserId() =>
