@@ -14,6 +14,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IAdminPanelService _adminPanelService;
     private readonly IAdminCrudService _adminCrudService;
     private readonly IRoleOrderWorkspaceService _roleOrderWorkspaceService;
+    private readonly IWindowService _windowService;
     private readonly AdminDashboardSectionViewModel _dashboardSection;
     private readonly AdminUsersSectionViewModel _usersSection;
     private readonly AdminOrdersSectionViewModel _ordersSection;
@@ -61,20 +62,24 @@ public sealed class MainWindowViewModel : ViewModelBase
     private bool _isInitialized;
     private object? _activeModalContent;
     private readonly RelayCommand _closeModalCommand;
+    private readonly RelayCommand _logoutCommand;
 
     public MainWindowViewModel(
         IAuthStateService authStateService,
         IAdminPanelService adminPanelService,
         IAdminCrudService adminCrudService,
         IRoleOrderWorkspaceService roleOrderWorkspaceService,
-        IUserSelfService userSelfService)
+        IUserSelfService userSelfService,
+        IWindowService windowService)
     {
         _authStateService = authStateService;
         _adminPanelService = adminPanelService;
         _adminCrudService = adminCrudService;
         _roleOrderWorkspaceService = roleOrderWorkspaceService;
+        _windowService = windowService;
         _authStateService.AuthStateChanged += HandleAuthStateChanged;
         _closeModalCommand = new RelayCommand(CloseModal, () => ActiveModalContent is not null);
+        _logoutCommand = new RelayCommand(Logout, () => _authStateService.IsAuthenticated);
 
         _dashboardSection = new AdminDashboardSectionViewModel();
         _usersSection = new AdminUsersSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
@@ -216,6 +221,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
     }
     public RelayCommand CloseModalCommand => _closeModalCommand;
+    public RelayCommand LogoutCommand => _logoutCommand;
 
     public string ShellTitle => CurrentRoleCode switch
     {
@@ -379,6 +385,13 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         uint? receiverId = _authStateService.CurrentUser?.Id;
         OpenOrderWizard(receiverId, lockReceiver: true, allowAssignment: false);
+    }
+
+    private void Logout()
+    {
+        ActiveModalContent = null;
+        _authStateService.SignOut();
+        _windowService.Close(this);
     }
 
     public void OpenOrderDetails(Order order)

@@ -41,24 +41,11 @@ public partial class App : Application
             return;
         }
 
-        bool? dialogResult;
-        using (IServiceScope loginScope = Services.CreateScope())
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        if (!ShowLoginAndMainWindow())
         {
-            var loginWindow = loginScope.ServiceProvider.GetRequiredService<LoginWindow>();
-            dialogResult = loginWindow.ShowDialog();
+            Shutdown();
         }
-
-        if (dialogResult == true)
-        {
-            _mainWindowScope = Services.CreateScope();
-            ShutdownMode = ShutdownMode.OnMainWindowClose;
-            MainWindow = _mainWindowScope.ServiceProvider.GetRequiredService<MainWindow>();
-            MainWindow.Closed += HandleMainWindowClosed;
-            MainWindow.Show();
-            return;
-        }
-
-        Shutdown();
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -70,8 +57,44 @@ public partial class App : Application
 
     private void HandleMainWindowClosed(object? sender, EventArgs e)
     {
+        bool shouldReturnToLogin = !Services.GetRequiredService<IAuthStateService>().IsAuthenticated;
+
         _mainWindowScope?.Dispose();
         _mainWindowScope = null;
+        MainWindow = null;
+
+        if (shouldReturnToLogin)
+        {
+            if (!ShowLoginAndMainWindow())
+            {
+                Shutdown();
+            }
+
+            return;
+        }
+
+        Shutdown();
+    }
+
+    private bool ShowLoginAndMainWindow()
+    {
+        bool? dialogResult;
+        using (IServiceScope loginScope = Services.CreateScope())
+        {
+            var loginWindow = loginScope.ServiceProvider.GetRequiredService<LoginWindow>();
+            dialogResult = loginWindow.ShowDialog();
+        }
+
+        if (dialogResult != true)
+        {
+            return false;
+        }
+
+        _mainWindowScope = Services.CreateScope();
+        MainWindow = _mainWindowScope.ServiceProvider.GetRequiredService<MainWindow>();
+        MainWindow.Closed += HandleMainWindowClosed;
+        MainWindow.Show();
+        return true;
     }
 
     private static ServiceProvider ConfigureServices()
