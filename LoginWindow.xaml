@@ -9,6 +9,7 @@
         Title="Авторизация"
         Width="828"
         Height="571"
+        Icon="Assets/AppIcon.png"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterScreen"

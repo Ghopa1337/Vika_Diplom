@@ -13,6 +13,7 @@
         Height="860"
         MinWidth="1180"
         MinHeight="720"
+        Icon="Assets/AppIcon.png"
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized"
         Style="{StaticResource MaterialDesignWindow}">
