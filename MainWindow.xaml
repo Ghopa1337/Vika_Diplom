@@ -228,12 +228,12 @@
                             </StackPanel>
 
                             <StackPanel Visibility="{Binding CurrentStep, Converter={local:StepToVisibilityConverter}, ConverterParameter=2}">
-                                <TextBlock Text="Шаг 2. Маршрут и контакты"
+                                <TextBlock Text="Шаг 2. Маршрут и телефоны"
                                            FontSize="20"
                                            FontWeight="Bold"
                                            Foreground="#22303A" />
                                 <TextBlock Margin="0,8,0,0"
-                                           Text="Заполните точки маршрута, контактных лиц и при необходимости укажите плановые даты."
+                                           Text="Заполните точки маршрута, укажите телефоны водителя и получателя и при необходимости задайте плановые даты."
                                            FontSize="13"
                                            TextWrapping="Wrap"
                                            Foreground="#687683" />
@@ -246,22 +246,18 @@
                                              Text="{Binding DeliveryAddress, UpdateSourceTrigger=PropertyChanged}"
                                              materialDesign:HintAssist.Hint="Адрес доставки" />
                                     <TextBox Margin="0,0,10,10"
-                                             Text="{Binding PickupContactName, UpdateSourceTrigger=PropertyChanged}"
-                                             materialDesign:HintAssist.Hint="Контакт на погрузке" />
-                                    <TextBox Margin="0,0,10,10"
-                                             Text="{Binding DeliveryContactName, UpdateSourceTrigger=PropertyChanged}"
-                                             materialDesign:HintAssist.Hint="Контакт на доставке" />
-                                    <TextBox Margin="0,0,10,10"
                                              Text="{Binding PickupContactPhone, UpdateSourceTrigger=PropertyChanged}"
-                                             materialDesign:HintAssist.Hint="Телефон погрузки" />
+                                             materialDesign:HintAssist.Hint="Телефон водителя" />
                                     <TextBox Margin="0,0,10,10"
                                              Text="{Binding DeliveryContactPhone, UpdateSourceTrigger=PropertyChanged}"
-                                             materialDesign:HintAssist.Hint="Телефон доставки" />
+                                             materialDesign:HintAssist.Hint="Телефон получателя" />
                                     <DatePicker Margin="0,0,10,10"
                                                 SelectedDate="{Binding PlannedPickupAt}"
+                                                DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}"
                                                 materialDesign:HintAssist.Hint="План погрузки" />
                                     <DatePicker Margin="0,0,10,10"
                                                 SelectedDate="{Binding DesiredDeliveryAt}"
+                                                DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}"
                                                 materialDesign:HintAssist.Hint="Желаемая доставка" />
                                 </UniformGrid>
 
@@ -278,7 +274,7 @@
                                            FontWeight="Bold"
                                            Foreground="#22303A" />
                                 <TextBlock Margin="0,8,0,0"
-                                           Text="Стоимость можно оставить пустой и заполнить позже. Если выбрать и водителя, и транспорт, заказ будет создан со статусом «Назначен»."
+                                           Text="Стоимость рассчитывается автоматически по расстоянию. При необходимости сразу закрепите экипаж. Если выбрать и водителя, и транспорт, заказ будет создан со статусом «Назначен»."
                                            FontSize="13"
                                            TextWrapping="Wrap"
                                            Foreground="#687683" />
@@ -289,6 +285,7 @@
                                              materialDesign:HintAssist.Hint="Расстояние, км" />
                                     <TextBox Margin="0,0,10,10"
                                              Text="{Binding TotalCost, UpdateSourceTrigger=PropertyChanged}"
+                                             IsReadOnly="True"
                                              materialDesign:HintAssist.Hint="Стоимость перевозки" />
                                     <ComboBox Margin="0,0,10,10"
                                               SelectedValue="{Binding SelectedDriverId}"
@@ -631,8 +628,8 @@
                                 <UniformGrid Columns="2">
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="ФИО / контактное лицо" Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Компания" Text="{Binding CompanyName, UpdateSourceTrigger=PropertyChanged}" />
-                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Email" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
-                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Email *" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон *" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" />
                                 </UniformGrid>
 
                                 <Button Margin="0,8,0,0" Width="170" HorizontalAlignment="Left" Command="{Binding SaveProfileCommand}" Content="Сохранить профиль" Style="{StaticResource MaterialDesignRaisedButton}" />
@@ -1257,8 +1254,8 @@
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="{Binding PasswordHint}" Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="ФИО / организация" Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" />
                                 <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Роль" ItemsSource="{Binding RoleOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedRoleId, Mode=TwoWay}" />
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Email" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Email *" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон *" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Компания" Text="{Binding CompanyName, UpdateSourceTrigger=PropertyChanged}" />
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <CheckBox Margin="0,0,14,0" Content="Активен" IsChecked="{Binding IsActive}" />
@@ -1380,16 +1377,14 @@
                                     <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedStatusCode, Mode=TwoWay}" />
                                     <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Водитель" ItemsSource="{Binding DriverOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedDriverId, Mode=TwoWay}" />
                                     <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Транспорт" ItemsSource="{Binding VehicleOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedVehicleId, Mode=TwoWay}" />
-                                    <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="План погрузки" SelectedDate="{Binding PlannedPickupAt, Mode=TwoWay}" />
-                                    <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="Желаемая доставка" SelectedDate="{Binding DesiredDeliveryAt, Mode=TwoWay}" />
+                                    <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="План погрузки" SelectedDate="{Binding PlannedPickupAt, Mode=TwoWay}" DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}" />
+                                    <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="Желаемая доставка" SelectedDate="{Binding DesiredDeliveryAt, Mode=TwoWay}" DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Адрес погрузки" Text="{Binding PickupAddress, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Адрес доставки" Text="{Binding DeliveryAddress, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Км" Text="{Binding DistanceKm, UpdateSourceTrigger=PropertyChanged}" />
-                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Стоимость" Text="{Binding TotalCost, UpdateSourceTrigger=PropertyChanged}" />
-                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Контакт погрузки" Text="{Binding PickupContactName, UpdateSourceTrigger=PropertyChanged}" />
-                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон погрузки" Text="{Binding PickupContactPhone, UpdateSourceTrigger=PropertyChanged}" />
-                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Контакт доставки" Text="{Binding DeliveryContactName, UpdateSourceTrigger=PropertyChanged}" />
-                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон доставки" Text="{Binding DeliveryContactPhone, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Стоимость" Text="{Binding TotalCost, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон водителя" Text="{Binding PickupContactPhone, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон получателя" Text="{Binding DeliveryContactPhone, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Причина отмены" Text="{Binding CancellationReason, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Комментарий" Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" />
                                 </UniformGrid>
@@ -1725,7 +1720,7 @@
 
     <Grid Background="#EEF3F7">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="350" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
@@ -1749,7 +1744,7 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Margin="28,28,28,18">
-                    <TextBlock Text="Cargo"
+                    <TextBlock Text="Грузоперевозки"
                                FontSize="30"
                                FontWeight="Bold"
                                Foreground="White" />

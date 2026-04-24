@@ -1,6 +1,7 @@
 using CargoTransport.Desktop.Models;
 using CargoTransport.Desktop.Repositories;
 using Microsoft.EntityFrameworkCore;
+using CargoTransport.Desktop;
 
 namespace CargoTransport.Desktop.Services;
 
@@ -298,7 +299,7 @@ public sealed class AdminCrudService : IAdminCrudService
         ValidateUser(data, isCreate: true);
 
         string username = data.Username.Trim();
-        string? email = NormalizeOptional(data.Email);
+        string? email = InputValidationHelper.NormalizeOptionalEmail(data.Email);
 
         if (await _repositoryManager.User.ExistsByUsernameAsync(username, cancellationToken))
         {
@@ -318,7 +319,7 @@ public sealed class AdminCrudService : IAdminCrudService
             FullName = data.FullName.Trim(),
             RoleId = data.RoleId,
             Email = email,
-            Phone = NormalizeOptional(data.Phone),
+            Phone = InputValidationHelper.NormalizeOptionalPhone(data.Phone),
             CompanyName = NormalizeOptional(data.CompanyName),
             IsActive = data.IsActive,
             IsBlocked = data.IsBlocked,
@@ -341,7 +342,7 @@ public sealed class AdminCrudService : IAdminCrudService
             ?? throw new InvalidOperationException("Пользователь не найден.");
 
         string username = data.Username.Trim();
-        string? email = NormalizeOptional(data.Email);
+        string? email = InputValidationHelper.NormalizeOptionalEmail(data.Email);
 
         if (await _repositoryManager.User.ExistsByUsernameExceptIdAsync(username, userId, cancellationToken))
         {
@@ -358,7 +359,7 @@ public sealed class AdminCrudService : IAdminCrudService
         user.FullName = data.FullName.Trim();
         user.RoleId = data.RoleId;
         user.Email = email;
-        user.Phone = NormalizeOptional(data.Phone);
+        user.Phone = InputValidationHelper.NormalizeOptionalPhone(data.Phone);
         user.CompanyName = NormalizeOptional(data.CompanyName);
         user.IsActive = data.IsActive;
         user.IsBlocked = data.IsBlocked;
@@ -626,9 +627,9 @@ public sealed class AdminCrudService : IAdminCrudService
             PickupAddress = data.PickupAddress.Trim(),
             DeliveryAddress = data.DeliveryAddress.Trim(),
             PickupContactName = NormalizeOptional(data.PickupContactName),
-            PickupContactPhone = NormalizeOptional(data.PickupContactPhone),
+            PickupContactPhone = InputValidationHelper.NormalizeOptionalPhone(data.PickupContactPhone),
             DeliveryContactName = NormalizeOptional(data.DeliveryContactName),
-            DeliveryContactPhone = NormalizeOptional(data.DeliveryContactPhone),
+            DeliveryContactPhone = InputValidationHelper.NormalizeOptionalPhone(data.DeliveryContactPhone),
             DistanceKm = data.DistanceKm,
             TotalCost = data.TotalCost,
             Status = data.Status,
@@ -684,9 +685,9 @@ public sealed class AdminCrudService : IAdminCrudService
         order.PickupAddress = data.PickupAddress.Trim();
         order.DeliveryAddress = data.DeliveryAddress.Trim();
         order.PickupContactName = NormalizeOptional(data.PickupContactName);
-        order.PickupContactPhone = NormalizeOptional(data.PickupContactPhone);
+        order.PickupContactPhone = InputValidationHelper.NormalizeOptionalPhone(data.PickupContactPhone);
         order.DeliveryContactName = NormalizeOptional(data.DeliveryContactName);
-        order.DeliveryContactPhone = NormalizeOptional(data.DeliveryContactPhone);
+        order.DeliveryContactPhone = InputValidationHelper.NormalizeOptionalPhone(data.DeliveryContactPhone);
         order.DistanceKm = data.DistanceKm;
         order.TotalCost = data.TotalCost;
         order.Status = data.Status;
@@ -818,6 +819,26 @@ public sealed class AdminCrudService : IAdminCrudService
         {
             throw new InvalidOperationException("Для нового пользователя нужно указать пароль.");
         }
+
+        if (string.IsNullOrWhiteSpace(data.Email))
+        {
+            throw new InvalidOperationException("Укажите email.");
+        }
+
+        if (!InputValidationHelper.IsValidAsciiEmail(data.Email))
+        {
+            throw new InvalidOperationException("Email должен быть записан латиницей и содержать символ @.");
+        }
+
+        if (string.IsNullOrWhiteSpace(data.Phone))
+        {
+            throw new InvalidOperationException("Укажите телефон.");
+        }
+
+        if (InputValidationHelper.KeepDigitsOnly(data.Phone) != data.Phone.Trim())
+        {
+            throw new InvalidOperationException("Телефон должен содержать только цифры.");
+        }
     }
 
     private static void ValidateDriver(AdminDriverEditData data)
@@ -894,6 +915,16 @@ public sealed class AdminCrudService : IAdminCrudService
         if (string.IsNullOrWhiteSpace(data.DeliveryAddress))
         {
             throw new InvalidOperationException("Укажите адрес доставки.");
+        }
+
+        if (data.PlannedPickupAt.HasValue && data.PlannedPickupAt.Value.Date < DateTime.Today)
+        {
+            throw new InvalidOperationException("Дата погрузки не может быть раньше сегодняшнего дня.");
+        }
+
+        if (data.DesiredDeliveryAt.HasValue && data.DesiredDeliveryAt.Value.Date < DateTime.Today)
+        {
+            throw new InvalidOperationException("Дата доставки не может быть раньше сегодняшнего дня.");
         }
 
         if (data.Status is "assigned" or "accepted" or "loading" or "in_transit" or "delivered" or "received"

@@ -157,12 +157,12 @@
                     </StackPanel>
 
                     <StackPanel Visibility="{Binding CurrentStep, Converter={local:StepToVisibilityConverter}, ConverterParameter=2}">
-                        <TextBlock Text="Шаг 2. Маршрут и контакты"
+                        <TextBlock Text="Шаг 2. Маршрут и телефоны"
                                    FontSize="20"
                                    FontWeight="Bold"
                                    Foreground="#22303A" />
                         <TextBlock Margin="0,8,0,0"
-                                   Text="Заполните точки маршрута, контактных лиц и при необходимости укажите плановые даты."
+                                   Text="Заполните точки маршрута, укажите телефоны водителя и получателя и при необходимости задайте плановые даты."
                                    FontSize="13"
                                    TextWrapping="Wrap"
                                    Foreground="#687683" />
@@ -175,22 +175,18 @@
                                      Text="{Binding DeliveryAddress, UpdateSourceTrigger=PropertyChanged}"
                                      materialDesign:HintAssist.Hint="Адрес доставки" />
                             <TextBox Margin="0,0,10,10"
-                                     Text="{Binding PickupContactName, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Контакт на погрузке" />
-                            <TextBox Margin="0,0,10,10"
-                                     Text="{Binding DeliveryContactName, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Контакт на доставке" />
-                            <TextBox Margin="0,0,10,10"
                                      Text="{Binding PickupContactPhone, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Телефон погрузки" />
+                                     materialDesign:HintAssist.Hint="Телефон водителя" />
                             <TextBox Margin="0,0,10,10"
                                      Text="{Binding DeliveryContactPhone, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Телефон доставки" />
+                                     materialDesign:HintAssist.Hint="Телефон получателя" />
                             <DatePicker Margin="0,0,10,10"
                                         SelectedDate="{Binding PlannedPickupAt}"
+                                        DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}"
                                         materialDesign:HintAssist.Hint="План погрузки" />
                             <DatePicker Margin="0,0,10,10"
                                         SelectedDate="{Binding DesiredDeliveryAt}"
+                                        DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}"
                                         materialDesign:HintAssist.Hint="Желаемая доставка" />
                         </UniformGrid>
 
@@ -207,7 +203,7 @@
                                    FontWeight="Bold"
                                    Foreground="#22303A" />
                         <TextBlock Margin="0,8,0,0"
-                                   Text="Укажите стоимость и при необходимости сразу закрепите экипаж. Если выбрать и водителя, и транспорт, заказ будет создан со статусом 'Назначен'."
+                                   Text="Стоимость рассчитывается автоматически по расстоянию. При необходимости сразу закрепите экипаж. Если выбрать и водителя, и транспорт, заказ будет создан со статусом 'Назначен'."
                                    FontSize="13"
                                    TextWrapping="Wrap"
                                    Foreground="#687683" />
@@ -218,6 +214,7 @@
                                      materialDesign:HintAssist.Hint="Расстояние, км" />
                             <TextBox Margin="0,0,10,10"
                                      Text="{Binding TotalCost, UpdateSourceTrigger=PropertyChanged}"
+                                     IsReadOnly="True"
                                      materialDesign:HintAssist.Hint="Стоимость перевозки" />
                             <ComboBox Margin="0,0,10,10"
                                       SelectedValue="{Binding SelectedDriverId}"

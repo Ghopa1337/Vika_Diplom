@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using CargoTransport.Desktop;
 using CargoTransport.Desktop.Models;
 using CargoTransport.Desktop.Services;
 
@@ -37,6 +38,8 @@ public sealed class OrderWizardViewModel : ViewModelBase
     private uint? _selectedDriverId;
     private uint? _selectedVehicleId;
     private string _statusMessage = "Заполните шаги мастера и создайте заказ без ручного CRUD.";
+
+    private bool _isUpdatingCalculatedCost;
 
     public OrderWizardViewModel(
         IAdminCrudService adminCrudService,
@@ -137,7 +140,7 @@ public sealed class OrderWizardViewModel : ViewModelBase
     public string PickupContactPhone
     {
         get => _pickupContactPhone;
-        set => SetWizardField(ref _pickupContactPhone, value);
+        set => SetWizardField(ref _pickupContactPhone, InputValidationHelper.KeepDigitsOnly(value));
     }
 
     public string DeliveryContactName
@@ -149,7 +152,7 @@ public sealed class OrderWizardViewModel : ViewModelBase
     public string DeliveryContactPhone
     {
         get => _deliveryContactPhone;
-        set => SetWizardField(ref _deliveryContactPhone, value);
+        set => SetWizardField(ref _deliveryContactPhone, InputValidationHelper.KeepDigitsOnly(value));
     }
 
     public DateTime? PlannedPickupAt
@@ -173,7 +176,13 @@ public sealed class OrderWizardViewModel : ViewModelBase
     public string DistanceKm
     {
         get => _distanceKm;
-        set => SetWizardField(ref _distanceKm, value);
+        set
+        {
+            if (SetWizardField(ref _distanceKm, value))
+            {
+                UpdateCalculatedCost();
+            }
+        }
     }
 
     public string TotalCost
@@ -202,6 +211,7 @@ public sealed class OrderWizardViewModel : ViewModelBase
 
     public bool IsReceiverSelectionEnabled => !_lockReceiver;
     public bool IsAssignmentVisible => _allowAssignment;
+    public DateTime MinSelectableDate => DateTime.Today;
 
     public ObservableCollection<AdminLookupItemViewModel> ReceiverOptions { get; } = [];
     public ObservableCollection<AdminLookupItemViewModel> CargoOptions { get; } = [];
@@ -237,7 +247,7 @@ public sealed class OrderWizardViewModel : ViewModelBase
             CurrentStep++;
             StatusMessage = CurrentStep switch
             {
-                2 => "Уточните маршрут, контакты и желаемые даты доставки.",
+                2 => "Уточните маршрут, телефоны и желаемые даты доставки.",
                 3 => "Проверьте расчёт и при необходимости назначьте экипаж.",
                 _ => StatusMessage
             };
@@ -252,7 +262,7 @@ public sealed class OrderWizardViewModel : ViewModelBase
             StatusMessage = CurrentStep switch
             {
                 1 => "Заполните получателя и параметры груза.",
-                2 => "Уточните маршрут и контактные данные.",
+                2 => "Уточните маршрут и телефоны.",
                 _ => StatusMessage
             };
         }
@@ -413,6 +423,32 @@ public sealed class OrderWizardViewModel : ViewModelBase
         }
 
         return changed;
+    }
+
+    private void UpdateCalculatedCost()
+    {
+        if (_isUpdatingCalculatedCost)
+        {
+            return;
+        }
+
+        _isUpdatingCalculatedCost = true;
+        try
+        {
+            if (!AdminParsingHelper.TryParseNullableDecimal(DistanceKm, out decimal? distanceKm, out _))
+            {
+                TotalCost = string.Empty;
+                return;
+            }
+
+            TotalCost = distanceKm.HasValue
+                ? AdminParsingHelper.FormatDecimal(InputValidationHelper.CalculateDeliveryCost(distanceKm.Value))
+                : string.Empty;
+        }
+        finally
+        {
+            _isUpdatingCalculatedCost = false;
+        }
     }
 
     private void RaiseCommandStatesChanged()

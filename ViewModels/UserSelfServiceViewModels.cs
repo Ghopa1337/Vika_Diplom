@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using CargoTransport.Desktop;
 using CargoTransport.Desktop.Services;
 
 namespace CargoTransport.Desktop.ViewModels;
@@ -73,13 +74,13 @@ public sealed class UserProfileSectionViewModel : ViewModelBase
     public string Email
     {
         get => _email;
-        set => Set(ref _email, value);
+        set => Set(ref _email, InputValidationHelper.NormalizeEmailInput(value));
     }
 
     public string Phone
     {
         get => _phone;
-        set => Set(ref _phone, value);
+        set => Set(ref _phone, InputValidationHelper.KeepDigitsOnly(value));
     }
 
     public string CompanyName

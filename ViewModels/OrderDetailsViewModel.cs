@@ -84,8 +84,8 @@ public sealed class OrderDetailsViewModel : ViewModelBase
     public string CargoTypeLabel => GetCargoTypeName(Order.Cargo?.CargoType);
     public string CargoMetrics => BuildCargoMetrics();
     public string CargoRequirements => string.IsNullOrWhiteSpace(Order.Cargo?.SpecialRequirements) ? "Без особых требований" : Order.Cargo.SpecialRequirements!;
-    public string PickupLabel => BuildContactBlock("Погрузка", Order.PickupAddress, Order.PickupContactName, Order.PickupContactPhone);
-    public string DeliveryLabel => BuildContactBlock("Доставка", Order.DeliveryAddress, Order.DeliveryContactName, Order.DeliveryContactPhone);
+    public string PickupLabel => BuildPhoneBlock("Погрузка", Order.PickupAddress, "Телефон водителя", Order.PickupContactPhone);
+    public string DeliveryLabel => BuildPhoneBlock("Доставка", Order.DeliveryAddress, "Телефон получателя", Order.DeliveryContactPhone);
     public string ScheduleLabel => BuildScheduleLabel();
     public string CommentLabel => string.IsNullOrWhiteSpace(Order.Comment) ? "Комментарий не добавлен." : Order.Comment!;
     public string CancellationLabel => string.IsNullOrWhiteSpace(Order.CancellationReason) ? "Не отменён" : Order.CancellationReason!;
@@ -307,11 +307,10 @@ public sealed class OrderDetailsViewModel : ViewModelBase
 
     private static string FormatDateTime(DateTime value) => value.ToString("dd.MM.yyyy HH:mm", RuCulture);
 
-    private static string BuildContactBlock(string title, string address, string? contactName, string? contactPhone)
+    private static string BuildPhoneBlock(string title, string address, string phoneLabel, string? contactPhone)
     {
-        string person = string.IsNullOrWhiteSpace(contactName) ? "Контакт не указан" : contactName;
-        string phone = string.IsNullOrWhiteSpace(contactPhone) ? "Телефон не указан" : contactPhone;
-        return $"{title}: {address}\n{person}\n{phone}";
+        string phone = string.IsNullOrWhiteSpace(contactPhone) ? $"{phoneLabel} не указан" : $"{phoneLabel}: {contactPhone}";
+        return $"{title}: {address}\n{phone}";
     }
 
     private string BuildCargoMetrics()

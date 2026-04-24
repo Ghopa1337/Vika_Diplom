@@ -174,14 +174,14 @@ public sealed class MainWindowViewModel : ViewModelBase
             "Новые назначения, изменения рейсов и системные сообщения для водителя.",
             RefreshSelfServiceShellAsync);
 
-        _dashboardNavigationItem = new AdminNavigationItemViewModel("Дашборд", "Оперативная сводка по системе и последним действиям", "0", _dashboardSection);
+        _dashboardNavigationItem = new AdminNavigationItemViewModel("Обзор", "Оперативная сводка по системе и последним действиям", "0", _dashboardSection);
         _usersNavigationItem = new AdminNavigationItemViewModel("Пользователи", "Управление учетными записями и ролями", "0", _usersSection);
         _ordersNavigationItem = new AdminNavigationItemViewModel("Заказы", "Фильтрация, карточки и контроль статусов перевозок", "0", _ordersSection);
         _cargoNavigationItem = new AdminNavigationItemViewModel("Грузы", "Справочник грузов, типов и требований к перевозке", "0", _cargoSection);
         _driversNavigationItem = new AdminNavigationItemViewModel("Водители", "Загрузка, доступность и история выполнения", "0", _driversSection);
         _vehiclesNavigationItem = new AdminNavigationItemViewModel("Транспорт", "Состояние автопарка и закрепление ТС", "0", _vehiclesSection);
         _reportsNavigationItem = new AdminNavigationItemViewModel("Отчеты", "Подготовка аналитики и экспортных сводок", "0", _reportsSection);
-        _dispatcherDashboardNavigationItem = new AdminNavigationItemViewModel("Смена", "Ключевые показатели диспетчера и быстрые действия по логистике", "0", _dispatcherDashboardSection);
+        _dispatcherDashboardNavigationItem = new AdminNavigationItemViewModel("Обзор", "Ключевые показатели диспетчера и быстрые действия по логистике", "0", _dispatcherDashboardSection);
         _dispatcherOrdersNavigationItem = new AdminNavigationItemViewModel("Заказы", "Назначение исполнителей, контроль доставки и статусов", "0", _ordersSection);
         _dispatcherCargoNavigationItem = new AdminNavigationItemViewModel("Грузы", "Справочник грузов для быстрого подбора под новые заказы", "0", _cargoSection);
         _dispatcherDriversNavigationItem = new AdminNavigationItemViewModel("Водители", "Доступность водителей и распределение загрузки", "0", _driversSection);

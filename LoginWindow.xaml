@@ -43,7 +43,7 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel>
-                            <TextBlock Text="Cargo Transport"
+                            <TextBlock Text="Грузоперевозки"
                                        FontSize="34"
                                        FontWeight="Bold"
                                        Foreground="White" />

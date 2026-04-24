@@ -5,6 +5,7 @@ using Sieve.Models;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Input;
+using CargoTransport.Desktop;
 
 namespace CargoTransport.Desktop.ViewModels;
 
@@ -421,13 +422,13 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
     public string Email
     {
         get => _email;
-        set => Set(ref _email, value);
+        set => Set(ref _email, InputValidationHelper.NormalizeEmailInput(value));
     }
 
     public string Phone
     {
         get => _phone;
-        set => Set(ref _phone, value);
+        set => Set(ref _phone, InputValidationHelper.KeepDigitsOnly(value));
     }
 
     public string CompanyName
@@ -548,6 +549,8 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
             case nameof(Username):
             case nameof(FullName):
             case nameof(SelectedRoleId):
+            case nameof(Email):
+            case nameof(Phone):
             case nameof(Password):
                 _saveCommand.RaiseCanExecuteChanged();
                 break;
@@ -622,6 +625,9 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
         && !string.IsNullOrWhiteSpace(Username)
         && !string.IsNullOrWhiteSpace(FullName)
         && SelectedRoleId is > 0
+        && !string.IsNullOrWhiteSpace(Email)
+        && InputValidationHelper.IsValidAsciiEmail(Email)
+        && !string.IsNullOrWhiteSpace(Phone)
         && (EditingUserId.HasValue || !string.IsNullOrWhiteSpace(Password));
 
     private async Task SaveAsync()
@@ -730,6 +736,7 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
     private DateTime? _desiredDeliveryAt;
     private string _cancellationReason = string.Empty;
     private string _comment = string.Empty;
+    private bool _isUpdatingCalculatedCost;
 
     public AdminOrdersSectionViewModel(
         IAdminCrudService adminCrudService,
@@ -891,7 +898,7 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
     public string PickupContactPhone
     {
         get => _pickupContactPhone;
-        set => Set(ref _pickupContactPhone, value);
+        set => Set(ref _pickupContactPhone, InputValidationHelper.KeepDigitsOnly(value));
     }
 
     public string DeliveryContactName
@@ -903,13 +910,19 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
     public string DeliveryContactPhone
     {
         get => _deliveryContactPhone;
-        set => Set(ref _deliveryContactPhone, value);
+        set => Set(ref _deliveryContactPhone, InputValidationHelper.KeepDigitsOnly(value));
     }
 
     public string DistanceKm
     {
         get => _distanceKm;
-        set => Set(ref _distanceKm, value);
+        set
+        {
+            if (Set(ref _distanceKm, value))
+            {
+                UpdateCalculatedCost();
+            }
+        }
     }
 
     public string TotalCost
@@ -947,6 +960,8 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
         get => _comment;
         set => Set(ref _comment, value);
     }
+
+    public DateTime MinSelectableDate => DateTime.Today;
 
     public bool HasSelectedOrder => SelectedOrder is not null;
     public string FormTitle => HasSelectedOrder ? "Карточка заказа" : "Создание заказа";
@@ -1225,6 +1240,32 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
         }
 
         await ExecuteCrudAsync(() => AdminCrudService.UpdateOrderAsync(data), "Заказ обновлен.");
+    }
+
+    private void UpdateCalculatedCost()
+    {
+        if (_isUpdatingCalculatedCost)
+        {
+            return;
+        }
+
+        _isUpdatingCalculatedCost = true;
+        try
+        {
+            if (!AdminParsingHelper.TryParseNullableDecimal(DistanceKm, out decimal? distanceKm, out _))
+            {
+                TotalCost = string.Empty;
+                return;
+            }
+
+            TotalCost = distanceKm.HasValue
+                ? AdminParsingHelper.FormatDecimal(InputValidationHelper.CalculateDeliveryCost(distanceKm.Value))
+                : string.Empty;
+        }
+        finally
+        {
+            _isUpdatingCalculatedCost = false;
+        }
     }
 
     private async Task DeleteAsync()

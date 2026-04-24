@@ -1,6 +1,7 @@
 using CargoTransport.Desktop.Models;
 using CargoTransport.Desktop.Repositories;
 using Microsoft.EntityFrameworkCore;
+using CargoTransport.Desktop;
 
 namespace CargoTransport.Desktop.Services;
 
@@ -87,7 +88,7 @@ public sealed class UserSelfService : IUserSelfService
         ValidateProfile(data);
 
         User user = await GetUserAsync(currentUser.Id, trackChanges: true, cancellationToken);
-        string? email = NormalizeOptional(data.Email);
+        string? email = InputValidationHelper.NormalizeOptionalEmail(data.Email);
 
         if (!string.IsNullOrWhiteSpace(email)
             && await _repositoryManager.User.ExistsByEmailExceptIdAsync(email, user.Id, cancellationToken))
@@ -97,7 +98,7 @@ public sealed class UserSelfService : IUserSelfService
 
         user.FullName = data.FullName.Trim();
         user.Email = email;
-        user.Phone = NormalizeOptional(data.Phone);
+        user.Phone = InputValidationHelper.NormalizeOptionalPhone(data.Phone);
         user.CompanyName = NormalizeOptional(data.CompanyName);
         user.UpdatedAt = DateTime.Now;
 
@@ -294,9 +295,24 @@ public sealed class UserSelfService : IUserSelfService
             throw new InvalidOperationException("Укажите ФИО или название контактного лица.");
         }
 
-        if (!string.IsNullOrWhiteSpace(data.Email) && !data.Email.Contains('@', StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(data.Email))
         {
-            throw new InvalidOperationException("Email должен содержать символ @.");
+            throw new InvalidOperationException("Укажите email.");
+        }
+
+        if (!InputValidationHelper.IsValidAsciiEmail(data.Email))
+        {
+            throw new InvalidOperationException("Email должен быть записан латиницей и содержать символ @.");
+        }
+
+        if (string.IsNullOrWhiteSpace(data.Phone))
+        {
+            throw new InvalidOperationException("Укажите телефон.");
+        }
+
+        if (InputValidationHelper.KeepDigitsOnly(data.Phone) != data.Phone.Trim())
+        {
+            throw new InvalidOperationException("Телефон должен содержать только цифры.");
         }
     }
 
