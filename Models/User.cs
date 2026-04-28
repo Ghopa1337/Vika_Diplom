@@ -36,6 +36,8 @@ public class User
     public Driver? DriverProfile { get; set; }
     public ICollection<Order> ReceiverOrders { get; set; } = new List<Order>();
     public ICollection<Order> CreatedOrders { get; set; } = new List<Order>();
+    public ICollection<OrderRequest> OrderRequests { get; set; } = new List<OrderRequest>();
+    public ICollection<OrderRequest> ProcessedOrderRequests { get; set; } = new List<OrderRequest>();
     public ICollection<OrderStatusHistory> OrderStatusChanges { get; set; } = new List<OrderStatusHistory>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     public ICollection<Report> Reports { get; set; } = new List<Report>();

@@ -525,6 +525,7 @@ public sealed class UserNotificationsSectionViewModel : ViewModelBase
         type switch
         {
             "order" => "Заказ",
+            "order_request" => "Заявка",
             "security" => "Безопасность",
             "route" => "Маршрут",
             "system" => "Система",

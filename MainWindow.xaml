@@ -340,6 +340,73 @@
             </Grid>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type viewModels:OrderRequestWizardViewModel}">
+            <Grid Margin="24">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Margin="0,0,0,20">
+                    <TextBlock Text="Новая заявка"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Foreground="#22303A" />
+                    <TextBlock Margin="0,10,0,0"
+                               Text="Получатель заполняет только основные данные: дата, маршрут, груз и контакты. Диспетчер потом оформит полноценный заказ."
+                               Foreground="#687683"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Border Grid.Row="1"
+                        Padding="22"
+                        CornerRadius="24"
+                        Background="White"
+                        BorderBrush="#E8EEF2"
+                        BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="{Binding StatusMessage}"
+                                   Foreground="#0F5C69"
+                                   TextWrapping="Wrap" />
+
+                        <UniformGrid Margin="0,18,0,0" Columns="2">
+                            <DatePicker Margin="0,0,10,10"
+                                        materialDesign:HintAssist.Hint="Желаемая дата"
+                                        SelectedDate="{Binding DesiredDate, Mode=TwoWay}"
+                                        DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}" />
+                            <TextBox Style="{StaticResource CrudTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="Груз"
+                                     Text="{Binding CargoDescription, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Style="{StaticResource CrudTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="Откуда"
+                                     Text="{Binding PickupAddress, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Style="{StaticResource CrudTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="Куда"
+                                     Text="{Binding DeliveryAddress, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Style="{StaticResource CrudTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="Телефон на погрузке"
+                                     Text="{Binding PickupContactPhone, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Style="{StaticResource CrudTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="Телефон получателя"
+                                     Text="{Binding DeliveryContactPhone, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Grid.ColumnSpan="2"
+                                     Style="{StaticResource CrudTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="Комментарий"
+                                     Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" />
+                        </UniformGrid>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Grid.Row="2" Margin="0,20,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Width="180"
+                            Background="#D8F3E3"
+                            Command="{Binding SubmitCommand}"
+                            Content="Отправить заявку" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type viewModels:OrderDetailsViewModel}">
             <Grid Margin="24">
                 <Grid.RowDefinitions>
@@ -699,6 +766,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
@@ -926,7 +994,7 @@
                                 <Button Style="{StaticResource CrudButtonStyle}" Content="Фильтр" Command="{Binding ApplyFilterCommand}" />
                                 <Button Style="{StaticResource CrudButtonStyle}" Content="Очистить" Command="{Binding ClearFilterCommand}" />
                                 <Button Style="{StaticResource CrudButtonStyle}" Content="Обновить" Command="{Binding RefreshCommand}" />
-                                <Button Style="{StaticResource CrudButtonStyle}" Content="Создать заказ" Command="{Binding CreateOrderCommand}" Visibility="{Binding IsReceiverMode, Converter={local:BooleanToVisibilityConverter}}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="{Binding CreateActionTitle}" Command="{Binding CreateOrderCommand}" Visibility="{Binding IsReceiverMode, Converter={local:BooleanToVisibilityConverter}}" />
                             </WrapPanel>
 
                             <TextBlock Margin="0,10,0,0"
@@ -987,7 +1055,70 @@
                     </Border>
                 </Grid>
 
-                <Border Grid.Row="2" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
+                <Border Grid.Row="2"
+                        Margin="0,0,0,14"
+                        Padding="20"
+                        CornerRadius="24"
+                        Background="White"
+                        BorderBrush="#E8EEF2"
+                        BorderThickness="1"
+                        Visibility="{Binding IsReceiverMode, Converter={local:BooleanToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.5*" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Margin="0,0,18,0">
+                            <TextBlock Text="Мои заявки" FontSize="20" FontWeight="SemiBold" Foreground="#22303A" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="Получатель сначала отправляет заявку, а после обработки у диспетчера по ней создается настоящий заказ."
+                                       Foreground="#687683"
+                                       TextWrapping="Wrap" />
+
+                            <Border Margin="0,16,0,0"
+                                    CornerRadius="18"
+                                    BorderBrush="#E8EEF2"
+                                    BorderThickness="1"
+                                    Visibility="{Binding HasRequests, Converter={local:BooleanToVisibilityConverter}}">
+                                <DataGrid Style="{StaticResource SectionDataGridStyle}"
+                                          ItemsSource="{Binding Requests}"
+                                          SelectedItem="{Binding SelectedRequest, Mode=TwoWay}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="№" Binding="{Binding Id}" Width="0.6*" />
+                                        <DataGridTextColumn Header="Груз" Binding="{Binding Cargo}" Width="1.5*" />
+                                        <DataGridTextColumn Header="Маршрут" Binding="{Binding Route}" Width="2.2*" />
+                                        <DataGridTextColumn Header="Дата" Binding="{Binding DesiredDate}" Width="1*" />
+                                        <DataGridTextColumn Header="Статус" Binding="{Binding StatusName}" Width="1.3*" />
+                                        <DataGridTextColumn Header="Заказ" Binding="{Binding CreatedOrderNumber}" Width="1.2*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
+
+                            <TextBlock Margin="0,14,0,0"
+                                       Text="Заявок пока нет."
+                                       Foreground="#687683"
+                                       Visibility="{Binding HasRequests, Converter={local:InverseBooleanToVisibilityConverter}}" />
+                        </StackPanel>
+
+                        <Border Grid.Column="1"
+                                Padding="18"
+                                CornerRadius="18"
+                                Background="#F7FAFC"
+                                BorderBrush="#E7EDF2"
+                                BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Детали заявки" FontSize="16" FontWeight="SemiBold" Foreground="#22303A" />
+                                <TextBlock Margin="0,10,0,0" Text="{Binding SelectedRequestSummary}" Foreground="#5F6D79" TextWrapping="Wrap" />
+                                <TextBlock Margin="0,12,0,0" Text="{Binding SelectedRequestRoute}" Foreground="#22303A" TextWrapping="Wrap" />
+                                <TextBlock Margin="0,10,0,0" Text="{Binding SelectedRequestContacts}" Foreground="#22303A" TextWrapping="Wrap" />
+                                <TextBlock Margin="0,10,0,0" Text="{Binding SelectedRequestDate}" Foreground="#22303A" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="3" CornerRadius="24" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                     <DataGrid Style="{StaticResource SectionDataGridStyle}"
                               ItemsSource="{Binding Orders}"
                               SelectedItem="{Binding SelectedOrder, Mode=TwoWay}">
@@ -1335,12 +1466,75 @@
                             <StackPanel>
                             <WrapPanel>
                                 <Button Style="{StaticResource CrudButtonStyle}" Content="Создать заказ" Command="{Binding BeginCreateCommand}" />
+                                <Button Style="{StaticResource CrudButtonStyle}" Content="Создать по заявке" Command="{Binding CreateFromRequestCommand}" />
                                 <Button Style="{StaticResource CrudButtonStyle}" Content="Открыть карточку" Command="{Binding OpenDetailsCommand}" />
                                 <Button Style="{StaticResource CrudButtonStyle}" Content="Сохранить изменения" Command="{Binding SaveCommand}" />
                                 <Button Style="{StaticResource CrudButtonStyle}" Content="Удалить" Command="{Binding DeleteCommand}" />
                                 <Button Style="{StaticResource CrudButtonStyle}" Content="Сброс" Command="{Binding ResetCommand}" />
                                 <TextBlock Margin="8,8,0,0" Text="{Binding StatusMessage}" Foreground="#0F5C69" TextWrapping="Wrap" />
                             </WrapPanel>
+
+                            <Border Margin="0,16,0,0"
+                                    Padding="18"
+                                    CornerRadius="18"
+                                    Background="#F7FAFC"
+                                    BorderBrush="#E7EDF2"
+                                    BorderThickness="1"
+                                    Visibility="{Binding HasPendingRequests, Converter={local:BooleanToVisibilityConverter}}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1.4*" />
+                                        <ColumnDefinition Width="1*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Margin="0,0,18,0">
+                                        <TextBlock Text="Входящие заявки"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#22303A" />
+                                        <TextBlock Margin="0,8,0,0"
+                                                   Text="Получатель создает короткую заявку, а диспетчер отсюда поднимает по ней полноценный заказ."
+                                                   Foreground="#687683"
+                                                   TextWrapping="Wrap" />
+
+                                        <Border Margin="0,14,0,0"
+                                                CornerRadius="14"
+                                                BorderBrush="#E8EEF2"
+                                                BorderThickness="1">
+                                            <DataGrid Style="{StaticResource SectionDataGridStyle}"
+                                                      ItemsSource="{Binding Requests}"
+                                                      SelectedItem="{Binding SelectedRequest, Mode=TwoWay}">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="№" Binding="{Binding Id}" Width="0.6*" />
+                                                    <DataGridTextColumn Header="Получатель" Binding="{Binding Receiver}" Width="1.4*" />
+                                                    <DataGridTextColumn Header="Груз" Binding="{Binding CargoDescription}" Width="1.5*" />
+                                                    <DataGridTextColumn Header="Маршрут" Binding="{Binding PickupAddress}" Width="1.4*" />
+                                                    <DataGridTextColumn Header="Куда" Binding="{Binding DeliveryAddress}" Width="1.4*" />
+                                                    <DataGridTextColumn Header="Дата" Binding="{Binding DesiredDate}" Width="1*" />
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <Border Grid.Column="1"
+                                            Padding="16"
+                                            CornerRadius="16"
+                                            Background="White"
+                                            BorderBrush="#E8EEF2"
+                                            BorderThickness="1">
+                                        <StackPanel>
+                                            <TextBlock Text="Детали заявки"
+                                                       FontSize="15"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#22303A" />
+                                            <TextBlock Margin="0,10,0,0" Text="{Binding SelectedRequestSummary}" Foreground="#687683" TextWrapping="Wrap" />
+                                            <TextBlock Margin="0,10,0,0" Text="{Binding SelectedRequestRoute}" Foreground="#22303A" TextWrapping="Wrap" />
+                                            <TextBlock Margin="0,10,0,0" Text="{Binding SelectedRequestContacts}" Foreground="#22303A" TextWrapping="Wrap" />
+                                            <TextBlock Margin="0,10,0,0" Text="{Binding SelectedRequestDate}" Foreground="#22303A" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Border>
 
                             <TextBlock Margin="0,10,0,0" Text="{Binding FormSubtitle}" Foreground="#687683" TextWrapping="Wrap" />
 

@@ -144,6 +144,22 @@ public sealed class AdminOrderRowViewModel
     public string? Comment { get; init; }
 }
 
+public sealed class AdminOrderRequestRowViewModel
+{
+    public required uint Id { get; init; }
+    public required uint ReceiverUserId { get; init; }
+    public required string Receiver { get; init; }
+    public required string CargoDescription { get; init; }
+    public required string PickupAddress { get; init; }
+    public required string DeliveryAddress { get; init; }
+    public required string PickupContactPhone { get; init; }
+    public required string DeliveryContactPhone { get; init; }
+    public required string DesiredDate { get; init; }
+    public DateTime? DesiredDateValue { get; init; }
+    public required string Status { get; init; }
+    public string? Comment { get; init; }
+}
+
 public sealed class AdminDriverRowViewModel
 {
     public required uint Id { get; init; }
@@ -702,15 +718,18 @@ public sealed class AdminUsersSectionViewModel : AdminEditableSectionViewModel
 public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
 {
     private readonly Action<uint?>? _openOrderWizard;
+    private readonly Action<uint>? _openOrderWizardFromRequest;
     private readonly Action<Order>? _openOrderDetails;
     private readonly AsyncRelayCommand _saveCommand;
     private readonly AsyncRelayCommand _deleteCommand;
     private readonly AsyncRelayCommand _openDetailsCommand;
     private readonly AsyncRelayCommand _applyFilterCommand;
     private readonly RelayCommand _beginCreateCommand;
+    private readonly RelayCommand _createFromRequestCommand;
     private readonly RelayCommand _resetCommand;
     private readonly RelayCommand _clearFilterCommand;
     private AdminOrderRowViewModel? _selectedOrder;
+    private AdminOrderRequestRowViewModel? _selectedRequest;
     private uint? _editingOrderId;
     private uint? _deleteArmedOrderId;
     private string _filterSearch = string.Empty;
@@ -742,12 +761,15 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
         IAdminCrudService adminCrudService,
         Func<CancellationToken, Task> refreshPanelAsync,
         Action<uint?>? openOrderWizard = null,
+        Action<uint>? openOrderWizardFromRequest = null,
         Action<Order>? openOrderDetails = null)
         : base(adminCrudService, refreshPanelAsync)
     {
         _openOrderWizard = openOrderWizard;
+        _openOrderWizardFromRequest = openOrderWizardFromRequest;
         _openOrderDetails = openOrderDetails;
         _beginCreateCommand = new RelayCommand(BeginCreate, () => !IsBusy);
+        _createFromRequestCommand = new RelayCommand(CreateFromRequest, () => !IsBusy && SelectedRequest is not null && _openOrderWizardFromRequest is not null);
         _saveCommand = new AsyncRelayCommand(SaveAsync, CanSave);
         _deleteCommand = new AsyncRelayCommand(DeleteAsync, () => !IsBusy && SelectedOrder is not null);
         _openDetailsCommand = new AsyncRelayCommand(OpenDetailsAsync, () => !IsBusy && SelectedOrder is not null && _openOrderDetails is not null);
@@ -758,6 +780,7 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
 
     public ObservableCollection<AdminStatTileViewModel> Stats { get; } = [];
     public ObservableCollection<AdminOrderRowViewModel> Orders { get; } = [];
+    public ObservableCollection<AdminOrderRequestRowViewModel> Requests { get; } = [];
     public ObservableCollection<AdminLookupItemViewModel> ReceiverOptions { get; } = [];
     public ObservableCollection<AdminLookupItemViewModel> CargoOptions { get; } = [];
     public ObservableCollection<AdminLookupItemViewModel> DriverOptions { get; } = [];
@@ -798,6 +821,7 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
     ];
 
     public ICommand BeginCreateCommand => _beginCreateCommand;
+    public ICommand CreateFromRequestCommand => _createFromRequestCommand;
     public ICommand SaveCommand => _saveCommand;
     public ICommand DeleteCommand => _deleteCommand;
     public ICommand OpenDetailsCommand => _openDetailsCommand;
@@ -809,6 +833,12 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
     {
         get => _selectedOrder;
         set => Set(ref _selectedOrder, value);
+    }
+
+    public AdminOrderRequestRowViewModel? SelectedRequest
+    {
+        get => _selectedRequest;
+        set => Set(ref _selectedRequest, value);
     }
 
     public uint? EditingOrderId
@@ -964,6 +994,17 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
     public DateTime MinSelectableDate => DateTime.Today;
 
     public bool HasSelectedOrder => SelectedOrder is not null;
+    public bool HasPendingRequests => Requests.Count > 0;
+    public string SelectedRequestSummary => SelectedRequest is null
+        ? "Выберите входящую заявку, чтобы оформить по ней заказ."
+        : $"Заявка #{SelectedRequest.Id} • {SelectedRequest.CargoDescription}";
+    public string SelectedRequestRoute => SelectedRequest is null
+        ? "Маршрут не выбран"
+        : $"{SelectedRequest.PickupAddress} -> {SelectedRequest.DeliveryAddress}";
+    public string SelectedRequestContacts => SelectedRequest is null
+        ? "Контакты не выбраны"
+        : $"Погрузка: {SelectedRequest.PickupContactPhone} • Получатель: {SelectedRequest.DeliveryContactPhone}";
+    public string SelectedRequestDate => SelectedRequest?.DesiredDate ?? "Дата не указана";
     public string FormTitle => HasSelectedOrder ? "Карточка заказа" : "Создание заказа";
     public string FormSubtitle => HasSelectedOrder
         ? "Выбранный заказ можно скорректировать или удалить. Для нового заказа используйте пошаговый мастер."
@@ -1026,6 +1067,30 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
                 CancellationReason = x.CancellationReason,
                 Comment = x.Comment
             }));
+
+        AdminCollectionHelper.ReplaceWith(
+            Requests,
+            data.Requests.Select(x => new AdminOrderRequestRowViewModel
+            {
+                Id = x.Id,
+                ReceiverUserId = x.ReceiverUserId,
+                Receiver = x.Receiver,
+                CargoDescription = x.CargoDescription,
+                PickupAddress = x.PickupAddress,
+                DeliveryAddress = x.DeliveryAddress,
+                PickupContactPhone = x.PickupContactPhone,
+                DeliveryContactPhone = x.DeliveryContactPhone,
+                DesiredDate = x.DesiredDate,
+                DesiredDateValue = x.DesiredDateValue,
+                Status = x.Status,
+                Comment = x.Comment
+            }));
+
+        SelectedRequest = SelectedRequest is null
+            ? Requests.FirstOrDefault()
+            : Requests.FirstOrDefault(x => x.Id == SelectedRequest.Id) ?? Requests.FirstOrDefault();
+
+        OnPropertyChanged(nameof(HasPendingRequests));
     }
 
     public override SieveModel BuildSieveModel()
@@ -1074,6 +1139,13 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
                 OnPropertyChanged(nameof(FormSubtitle));
                 RaiseCommandStates();
                 break;
+            case nameof(SelectedRequest):
+                _createFromRequestCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(SelectedRequestSummary));
+                OnPropertyChanged(nameof(SelectedRequestRoute));
+                OnPropertyChanged(nameof(SelectedRequestContacts));
+                OnPropertyChanged(nameof(SelectedRequestDate));
+                break;
             case nameof(EditingOrderId):
                 OnPropertyChanged(nameof(FormTitle));
                 break;
@@ -1091,6 +1163,7 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
     protected override void RaiseCommandStates()
     {
         _beginCreateCommand.RaiseCanExecuteChanged();
+        _createFromRequestCommand.RaiseCanExecuteChanged();
         _saveCommand.RaiseCanExecuteChanged();
         _deleteCommand.RaiseCanExecuteChanged();
         _openDetailsCommand.RaiseCanExecuteChanged();
@@ -1122,6 +1195,17 @@ public sealed class AdminOrdersSectionViewModel : AdminEditableSectionViewModel
 
         StatusMessage = "Открыт пошаговый мастер создания заказа.";
         _openOrderWizard(null);
+    }
+
+    private void CreateFromRequest()
+    {
+        if (SelectedRequest is null || _openOrderWizardFromRequest is null)
+        {
+            return;
+        }
+
+        StatusMessage = $"Открыт мастер заказа по заявке #{SelectedRequest.Id}.";
+        _openOrderWizardFromRequest(SelectedRequest.Id);
     }
 
     private void ResetForm()

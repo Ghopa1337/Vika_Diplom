@@ -113,6 +113,7 @@ public partial class App : Application
         services.AddTransient<IAdminPanelService, AdminPanelService>();
         services.AddTransient<IAdminCrudService, AdminCrudService>();
         services.AddTransient<IRoleOrderWorkspaceService, RoleOrderWorkspaceService>();
+        services.AddTransient<IOrderRequestService, OrderRequestService>();
         services.AddTransient<IUserSelfService, UserSelfService>();
         services.Configure<SieveOptions>(options =>
         {

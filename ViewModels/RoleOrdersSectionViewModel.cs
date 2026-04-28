@@ -21,18 +21,35 @@ public sealed class RoleOrderRowViewModel
     public required string Cost { get; init; }
 }
 
+public sealed class RoleOrderRequestRowViewModel
+{
+    public required uint Id { get; init; }
+    public required string Cargo { get; init; }
+    public required string Route { get; init; }
+    public required string DesiredDate { get; init; }
+    public required string StatusCode { get; init; }
+    public required string StatusName { get; init; }
+    public required string PickupContactPhone { get; init; }
+    public required string DeliveryContactPhone { get; init; }
+    public required string CreatedOrderNumber { get; init; }
+    public string? Comment { get; init; }
+}
+
 public sealed class RoleOrdersSectionViewModel : ViewModelBase
 {
     private readonly IRoleOrderWorkspaceService _roleOrderWorkspaceService;
+    private readonly IOrderRequestService? _orderRequestService;
     private readonly RoleOrderCabinetMode _mode;
     private readonly Action<Order> _openOrderDetails;
     private readonly Action? _createOrder;
     private readonly Func<Task> _onOrdersStateChanged;
     private readonly List<Order> _allOrders = [];
+    private readonly List<OrderRequest> _allRequests = [];
 
     private string _filterSearch = string.Empty;
     private string _filterStatusCode = string.Empty;
     private RoleOrderRowViewModel? _selectedOrder;
+    private RoleOrderRequestRowViewModel? _selectedRequest;
     private string _statusMessage = string.Empty;
     private bool _isBusy;
 
@@ -41,9 +58,11 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
         RoleOrderCabinetMode mode,
         Action<Order> openOrderDetails,
         Func<Task> onOrdersStateChanged,
-        Action? createOrder = null)
+        Action? createOrder = null,
+        IOrderRequestService? orderRequestService = null)
     {
         _roleOrderWorkspaceService = roleOrderWorkspaceService;
+        _orderRequestService = orderRequestService;
         _mode = mode;
         _openOrderDetails = openOrderDetails;
         _createOrder = createOrder;
@@ -61,12 +80,13 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
         ConfirmReceiptCommand = new AsyncRelayCommand(() => ExecuteActionAsync(RoleOrderAction.ConfirmReceipt), () => CanConfirmReceipt);
     }
 
-    public string HeaderTitle => _mode == RoleOrderCabinetMode.Receiver ? "Мои заказы" : "Мои рейсы";
-    public string HeaderSubtitle => _mode == RoleOrderCabinetMode.Receiver
-        ? "Личный список заказов текущего получателя с подтверждением получения."
+    public string HeaderTitle => IsReceiverMode ? "Мои заявки и заказы" : "Мои рейсы";
+    public string HeaderSubtitle => IsReceiverMode
+        ? "Сначала получатель отправляет упрощенную заявку, а после обработки диспетчером здесь появляется полноценный заказ."
         : "Назначенные перевозки текущего водителя со сменой рабочих статусов.";
-    public string CounterpartyColumnTitle => _mode == RoleOrderCabinetMode.Receiver ? "Водитель" : "Получатель";
-    public string ActionPanelTitle => _mode == RoleOrderCabinetMode.Receiver ? "Действия получателя" : "Действия водителя";
+    public string CounterpartyColumnTitle => IsReceiverMode ? "Водитель" : "Получатель";
+    public string ActionPanelTitle => IsReceiverMode ? "Детали заказа" : "Действия водителя";
+    public string CreateActionTitle => IsReceiverMode ? "Создать заявку" : "Создать заказ";
     public bool IsReceiverMode => _mode == RoleOrderCabinetMode.Receiver;
     public bool IsDriverMode => _mode == RoleOrderCabinetMode.Driver;
     public bool IsBusy
@@ -95,6 +115,7 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
 
     public ObservableCollection<AdminStatTileViewModel> Metrics { get; } = [];
     public ObservableCollection<RoleOrderRowViewModel> Orders { get; } = [];
+    public ObservableCollection<RoleOrderRequestRowViewModel> Requests { get; } = [];
     public ObservableCollection<AdminChoiceViewModel> StatusFilterOptions { get; } =
     [
         new(string.Empty, "Все статусы"),
@@ -112,6 +133,12 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
     {
         get => _selectedOrder;
         set => Set(ref _selectedOrder, value);
+    }
+
+    public RoleOrderRequestRowViewModel? SelectedRequest
+    {
+        get => _selectedRequest;
+        set => Set(ref _selectedRequest, value);
     }
 
     public RelayCommand ApplyFilterCommand { get; }
@@ -134,9 +161,23 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
 
     public int TotalOrdersCount => _allOrders.Count;
     public int ActiveOrdersCount => _allOrders.Count(x => x.Status is not (Order.OrderStatuses.Received or Order.OrderStatuses.Cancelled));
-    public int AwaitingActionCount => _mode == RoleOrderCabinetMode.Receiver
-        ? _allOrders.Count(x => x.Status == Order.OrderStatuses.Delivered)
+    public int TotalRequestsCount => _allRequests.Count;
+    public int PendingRequestsCount => _allRequests.Count(x => x.Status == OrderRequest.OrderRequestStatuses.Pending);
+    public int DeliveredAwaitingConfirmationCount => _allOrders.Count(x => x.Status == Order.OrderStatuses.Delivered);
+    public int AwaitingActionCount => IsReceiverMode
+        ? PendingRequestsCount + DeliveredAwaitingConfirmationCount
         : _allOrders.Count(x => x.Status == Order.OrderStatuses.Assigned);
+
+    public bool HasRequests => IsReceiverMode && Requests.Count > 0;
+    public string SelectedRequestSummary => SelectedRequest is null
+        ? "Выберите заявку в списке, чтобы быстро проверить маршрут и контакты."
+        : $"Заявка #{SelectedRequest.Id} • {SelectedRequest.Cargo}";
+    public string SelectedRequestRoute => SelectedRequest?.Route ?? "Маршрут не выбран";
+    public string SelectedRequestContacts => SelectedRequest is null
+        ? "Контакты не выбраны"
+        : $"Погрузка: {SelectedRequest.PickupContactPhone} • Получатель: {SelectedRequest.DeliveryContactPhone}";
+    public string SelectedRequestStatusLabel => SelectedRequest?.StatusName ?? "Не выбрана";
+    public string SelectedRequestCreatedOrder => SelectedRequest?.CreatedOrderNumber ?? "Заказ еще не создан";
 
     protected override void OnPropertyChanged(string? propertyName)
     {
@@ -159,6 +200,13 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
                 OnPropertyChanged(nameof(SelectedOrderDeliveryValue));
                 OnPropertyChanged(nameof(SelectedOrderCostValue));
                 break;
+            case nameof(SelectedRequest):
+                OnPropertyChanged(nameof(SelectedRequestSummary));
+                OnPropertyChanged(nameof(SelectedRequestRoute));
+                OnPropertyChanged(nameof(SelectedRequestContacts));
+                OnPropertyChanged(nameof(SelectedRequestStatusLabel));
+                OnPropertyChanged(nameof(SelectedRequestCreatedOrder));
+                break;
             case nameof(IsBusy):
                 ApplyFilterCommand.RaiseCanExecuteChanged();
                 ClearFilterCommand.RaiseCanExecuteChanged();
@@ -178,11 +226,11 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
             _allOrders.Clear();
             _allOrders.AddRange(orders);
 
+            await LoadRequestsAsync(cancellationToken);
             ApplyMetrics();
             ApplyFilters();
-            StatusMessage = _allOrders.Count == 0
-                ? (_mode == RoleOrderCabinetMode.Receiver ? "У текущего получателя пока нет заказов." : "У текущего водителя пока нет назначенных рейсов.")
-                : string.Empty;
+            ApplyRequestRows();
+            StatusMessage = BuildEmptyStateMessage();
         }
         catch (Exception ex)
         {
@@ -196,13 +244,13 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
 
     public IEnumerable<AdminStatTileViewModel> GetDashboardMetrics()
     {
-        if (_mode == RoleOrderCabinetMode.Receiver)
+        if (IsReceiverMode)
         {
             return
             [
-                new AdminStatTileViewModel("Всего заказов", TotalOrdersCount.ToString(CultureInfo.CurrentCulture), "Личный список доставок текущего получателя."),
-                new AdminStatTileViewModel("Активные", ActiveOrdersCount.ToString(CultureInfo.CurrentCulture), "Заказы, которые еще не завершены или не отменены."),
-                new AdminStatTileViewModel("Ждут подтверждения", AwaitingActionCount.ToString(CultureInfo.CurrentCulture), "Доставленные заказы, которые нужно подтвердить.")
+                new AdminStatTileViewModel("Мои заявки", TotalRequestsCount.ToString(CultureInfo.CurrentCulture), $"{PendingRequestsCount} еще ждут обработки диспетчером."),
+                new AdminStatTileViewModel("Активные заказы", ActiveOrdersCount.ToString(CultureInfo.CurrentCulture), "Доставки, которые уже оформлены и еще не завершены."),
+                new AdminStatTileViewModel("Ждут подтверждения", DeliveredAwaitingConfirmationCount.ToString(CultureInfo.CurrentCulture), "Доставленные заказы, которые можно подтвердить в кабинете.")
             ];
         }
 
@@ -216,13 +264,13 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
 
     public IEnumerable<AdminQuickActionCardViewModel> GetDashboardQuickActions()
     {
-        if (_mode == RoleOrderCabinetMode.Receiver)
+        if (IsReceiverMode)
         {
             return
             [
-                new AdminQuickActionCardViewModel("Открыть мои заказы", "Рабочий список заказов получателя уже подключен к текущему пользователю.", "Раздел Мои заказы"),
-                new AdminQuickActionCardViewModel("Подтвердить получение", "После статуса Доставлен можно завершить заказ из личного кабинета.", "Действие доступно"),
-                new AdminQuickActionCardViewModel("Проверить детали доставки", "По выбранному заказу можно открыть карточку и посмотреть маршрут с историей.", "Карточка заказа")
+                new AdminQuickActionCardViewModel("Оформить заявку", "Создайте короткую заявку, а диспетчер потом превратит ее в полноценный заказ.", "Раздел Мои заявки и заказы"),
+                new AdminQuickActionCardViewModel("Проверить статус заявки", "В списке заявок видно, какая из них еще ожидает обработки, а по какой уже создан заказ.", "Раздел Мои заявки"),
+                new AdminQuickActionCardViewModel("Подтвердить получение", "После статуса Доставлен можно завершить заказ из личного кабинета.", "Действие доступно")
             ];
         }
 
@@ -251,11 +299,27 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
 
     private async Task RefreshAsync() => await LoadAsync();
 
+    private async Task LoadRequestsAsync(CancellationToken cancellationToken)
+    {
+        _allRequests.Clear();
+
+        if (!IsReceiverMode || _orderRequestService is null)
+        {
+            return;
+        }
+
+        IReadOnlyList<OrderRequest> requests = await _orderRequestService.GetRequestsForCurrentReceiverAsync(cancellationToken);
+        _allRequests.AddRange(requests);
+    }
+
     private void ApplyMetrics()
     {
         AdminCollectionHelper.ReplaceWith(Metrics, GetDashboardMetrics());
         OnPropertyChanged(nameof(TotalOrdersCount));
         OnPropertyChanged(nameof(ActiveOrdersCount));
+        OnPropertyChanged(nameof(TotalRequestsCount));
+        OnPropertyChanged(nameof(PendingRequestsCount));
+        OnPropertyChanged(nameof(DeliveredAwaitingConfirmationCount));
         OnPropertyChanged(nameof(AwaitingActionCount));
     }
 
@@ -296,6 +360,32 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
         }
 
         SelectedOrder = rows.FirstOrDefault();
+    }
+
+    private void ApplyRequestRows()
+    {
+        if (!IsReceiverMode)
+        {
+            Requests.Clear();
+            SelectedRequest = null;
+            OnPropertyChanged(nameof(HasRequests));
+            return;
+        }
+
+        List<RoleOrderRequestRowViewModel> rows = _allRequests
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(MapRequest)
+            .ToList();
+
+        AdminCollectionHelper.ReplaceWith(Requests, rows);
+
+        if (SelectedRequest is not null)
+        {
+            SelectedRequest = rows.FirstOrDefault(x => x.Id == SelectedRequest.Id);
+        }
+
+        SelectedRequest ??= rows.FirstOrDefault();
+        OnPropertyChanged(nameof(HasRequests));
     }
 
     private void ClearFilters()
@@ -359,7 +449,7 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
             OrderNumber = order.OrderNumber,
             Cargo = order.Cargo?.Name ?? "Груз не указан",
             CounterpartyTitle = CounterpartyColumnTitle,
-            CounterpartyValue = _mode == RoleOrderCabinetMode.Receiver
+            CounterpartyValue = IsReceiverMode
                 ? order.Driver?.User?.FullName ?? "Не назначен"
                 : order.ReceiverUser?.CompanyName ?? order.ReceiverUser?.FullName ?? "Не указан",
             Vehicle = order.Vehicle?.LicensePlate ?? "Не назначен",
@@ -369,6 +459,35 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
             DeliveryDate = order.DesiredDeliveryAt?.ToString("dd.MM.yyyy HH:mm", CultureInfo.GetCultureInfo("ru-RU")) ?? "Не назначена",
             Cost = order.TotalCost?.ToString("0.## ₽", CultureInfo.GetCultureInfo("ru-RU")) ?? "Не указана"
         };
+
+    private static RoleOrderRequestRowViewModel MapRequest(OrderRequest request) =>
+        new()
+        {
+            Id = request.Id,
+            Cargo = request.CargoDescription,
+            Route = $"{request.PickupAddress} -> {request.DeliveryAddress}",
+            DesiredDate = request.DesiredDate?.ToString("dd.MM.yyyy", CultureInfo.GetCultureInfo("ru-RU")) ?? "Не указана",
+            StatusCode = request.Status,
+            StatusName = GetRequestStatusName(request.Status),
+            PickupContactPhone = request.PickupContactPhone,
+            DeliveryContactPhone = request.DeliveryContactPhone,
+            CreatedOrderNumber = request.CreatedOrder?.OrderNumber ?? "Еще не оформлен",
+            Comment = request.Comment
+        };
+
+    private string BuildEmptyStateMessage()
+    {
+        if (!IsReceiverMode)
+        {
+            return _allOrders.Count == 0
+                ? "У текущего водителя пока нет назначенных рейсов."
+                : string.Empty;
+        }
+
+        return _allOrders.Count == 0 && _allRequests.Count == 0
+            ? "У текущего получателя пока нет ни заявок, ни заказов."
+            : string.Empty;
+    }
 
     private void RaiseActionStates()
     {
@@ -393,6 +512,14 @@ public sealed class RoleOrdersSectionViewModel : ViewModelBase
             "delivered" => "Доставлен",
             "received" => "Получен",
             "cancelled" => "Отменен",
+            _ => statusCode
+        };
+
+    private static string GetRequestStatusName(string statusCode) =>
+        statusCode switch
+        {
+            "pending" => "Ожидает обработки",
+            "processed" => "Преобразована в заказ",
             _ => statusCode
         };
 }

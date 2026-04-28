@@ -97,8 +97,8 @@ public interface IAdminCrudService
     Task CreateVehicleAsync(AdminVehicleEditData data, CancellationToken cancellationToken = default);
     Task UpdateVehicleAsync(AdminVehicleEditData data, CancellationToken cancellationToken = default);
     Task DeleteVehicleAsync(uint vehicleId, CancellationToken cancellationToken = default);
-    Task CreateOrderAsync(AdminOrderEditData data, CancellationToken cancellationToken = default);
-    Task CreateOrderWithCargoAsync(AdminOrderEditData data, CargoItem cargo, CancellationToken cancellationToken = default);
+    Task<Order> CreateOrderAsync(AdminOrderEditData data, CancellationToken cancellationToken = default);
+    Task<Order> CreateOrderWithCargoAsync(AdminOrderEditData data, CargoItem cargo, CancellationToken cancellationToken = default);
     Task UpdateOrderAsync(AdminOrderEditData data, CancellationToken cancellationToken = default);
     Task DeleteOrderAsync(uint orderId, CancellationToken cancellationToken = default);
 }
@@ -593,18 +593,16 @@ public sealed class AdminCrudService : IAdminCrudService
         await LogAsync("vehicle", vehicleId, "vehicle_deleted", $"Удален транспорт {licensePlate}", cancellationToken);
     }
 
-    public async Task CreateOrderWithCargoAsync(AdminOrderEditData data, CargoItem cargo, CancellationToken cancellationToken = default)
+    public async Task<Order> CreateOrderWithCargoAsync(AdminOrderEditData data, CargoItem cargo, CancellationToken cancellationToken = default)
     {
-        // First, save the cargo item if it's new or needs update
         _repositoryManager.Cargo.CreateCargo(cargo);
         await _repositoryManager.SaveAsync(cancellationToken);
 
-        // Create order data with the new cargo ID
         var orderData = data with { CargoId = cargo.Id };
-        await CreateOrderAsync(orderData, cancellationToken);
+        return await CreateOrderAsync(orderData, cancellationToken);
     }
 
-    public async Task CreateOrderAsync(AdminOrderEditData data, CancellationToken cancellationToken = default)
+    public async Task<Order> CreateOrderAsync(AdminOrderEditData data, CancellationToken cancellationToken = default)
     {
         ValidateOrder(data);
 
@@ -657,6 +655,7 @@ public sealed class AdminCrudService : IAdminCrudService
         await CreateOrderNotificationsAsync(order, cancellationToken);
         await _repositoryManager.SaveAsync(cancellationToken);
         await LogAsync("order", order.Id, "order_created", $"Создан заказ {order.OrderNumber}", cancellationToken);
+        return order;
     }
 
     public async Task UpdateOrderAsync(AdminOrderEditData data, CancellationToken cancellationToken = default)

@@ -16,6 +16,7 @@ public class CargoTransportDbContext : DbContext
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
     public DbSet<CargoItem> CargoItems => Set<CargoItem>();
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderRequest> OrderRequests => Set<OrderRequest>();
     public DbSet<OrderStatusHistory> OrderStatusHistory => Set<OrderStatusHistory>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Report> Reports => Set<Report>();
@@ -207,6 +208,49 @@ public class CargoTransportDbContext : DbContext
                 .WithMany(x => x.CreatedOrders)
                 .HasForeignKey(x => x.CreatedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<OrderRequest>(entity =>
+        {
+            entity.ToTable("order_requests");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Id).HasColumnName("id").HasColumnType("int unsigned").ValueGeneratedOnAdd();
+            entity.Property(x => x.ReceiverUserId).HasColumnName("receiver_user_id").HasColumnType("int unsigned").IsRequired();
+            entity.Property(x => x.CargoDescription).HasColumnName("cargo_description").HasMaxLength(500).IsRequired();
+            entity.Property(x => x.PickupAddress).HasColumnName("pickup_address").HasMaxLength(500).IsRequired();
+            entity.Property(x => x.DeliveryAddress).HasColumnName("delivery_address").HasMaxLength(500).IsRequired();
+            entity.Property(x => x.PickupContactPhone).HasColumnName("pickup_contact_phone").HasMaxLength(20).IsRequired();
+            entity.Property(x => x.DeliveryContactPhone).HasColumnName("delivery_contact_phone").HasMaxLength(20).IsRequired();
+            entity.Property(x => x.DesiredDate).HasColumnName("desired_date");
+            entity.Property(x => x.Comment).HasColumnName("comment");
+            entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).IsRequired();
+            entity.Property(x => x.ProcessedByUserId).HasColumnName("processed_by_user_id").HasColumnType("int unsigned");
+            entity.Property(x => x.CreatedOrderId).HasColumnName("created_order_id").HasColumnType("int unsigned");
+            entity.Property(x => x.ProcessedAt).HasColumnName("processed_at");
+            entity.Property(x => x.CreatedAt).HasColumnName("created_at");
+            entity.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+
+            entity.HasIndex(x => x.ReceiverUserId);
+            entity.HasIndex(x => x.Status);
+            entity.HasIndex(x => x.CreatedAt);
+            entity.HasIndex(x => x.ProcessedByUserId);
+            entity.HasIndex(x => x.CreatedOrderId).IsUnique();
+
+            entity.HasOne(x => x.ReceiverUser)
+                .WithMany(x => x.OrderRequests)
+                .HasForeignKey(x => x.ReceiverUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.ProcessedByUser)
+                .WithMany(x => x.ProcessedOrderRequests)
+                .HasForeignKey(x => x.ProcessedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(x => x.CreatedOrder)
+                .WithMany()
+                .HasForeignKey(x => x.CreatedOrderId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<OrderStatusHistory>(entity =>

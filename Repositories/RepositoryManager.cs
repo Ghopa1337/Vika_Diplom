@@ -12,6 +12,7 @@ public interface IRepositoryManager : IAsyncDisposable, IDisposable
     IVehicleRepository Vehicle { get; }
     ICargoRepository Cargo { get; }
     IOrderRepository Order { get; }
+    IOrderRequestRepository OrderRequest { get; }
     IOrderStatusHistoryRepository OrderStatusHistory { get; }
     INotificationRepository Notification { get; }
     IPasswordHistoryRepository PasswordHistory { get; }
@@ -31,6 +32,7 @@ public sealed class RepositoryManager : IRepositoryManager
     private IVehicleRepository? _vehicleRepository;
     private ICargoRepository? _cargoRepository;
     private IOrderRepository? _orderRepository;
+    private IOrderRequestRepository? _orderRequestRepository;
     private IOrderStatusHistoryRepository? _orderStatusHistoryRepository;
     private INotificationRepository? _notificationRepository;
     private IPasswordHistoryRepository? _passwordHistoryRepository;
@@ -49,6 +51,7 @@ public sealed class RepositoryManager : IRepositoryManager
     public IVehicleRepository Vehicle => _vehicleRepository ??= new VehicleRepository(_context);
     public ICargoRepository Cargo => _cargoRepository ??= new CargoRepository(_context);
     public IOrderRepository Order => _orderRepository ??= new OrderRepository(_context);
+    public IOrderRequestRepository OrderRequest => _orderRequestRepository ??= new OrderRequestRepository(_context);
     public IOrderStatusHistoryRepository OrderStatusHistory => _orderStatusHistoryRepository ??= new OrderStatusHistoryRepository(_context);
     public INotificationRepository Notification => _notificationRepository ??= new NotificationRepository(_context);
     public IPasswordHistoryRepository PasswordHistory => _passwordHistoryRepository ??= new PasswordHistoryRepository(_context);

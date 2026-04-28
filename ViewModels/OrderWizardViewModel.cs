@@ -8,10 +8,23 @@ using CargoTransport.Desktop.Services;
 
 namespace CargoTransport.Desktop.ViewModels;
 
+public sealed record OrderWizardPrefillData(
+    uint? ReceiverUserId,
+    bool IsNewCargo,
+    uint? ExistingCargoId,
+    string CargoName,
+    string PickupAddress,
+    string DeliveryAddress,
+    string PickupContactPhone,
+    string DeliveryContactPhone,
+    DateTime? DesiredDeliveryAt,
+    string? Comment);
+
 public sealed class OrderWizardViewModel : ViewModelBase
 {
     private readonly IAdminCrudService _adminCrudService;
     private readonly Func<Task> _onCompleted;
+    private readonly Func<Order, Task>? _onOrderCreated;
     private readonly bool _lockReceiver;
     private readonly bool _allowAssignment;
     private int _currentStep = 1;
@@ -46,13 +59,17 @@ public sealed class OrderWizardViewModel : ViewModelBase
         Func<Task> onCompleted,
         uint? initialReceiverUserId = null,
         bool lockReceiver = false,
-        bool allowAssignment = true)
+        bool allowAssignment = true,
+        OrderWizardPrefillData? prefill = null,
+        Func<Order, Task>? onOrderCreated = null)
     {
         _adminCrudService = adminCrudService;
         _onCompleted = onCompleted;
+        _onOrderCreated = onOrderCreated;
         _lockReceiver = lockReceiver;
         _allowAssignment = allowAssignment;
-        _selectedReceiverUserId = initialReceiverUserId;
+        _selectedReceiverUserId = prefill?.ReceiverUserId ?? initialReceiverUserId;
+        ApplyPrefill(prefill);
 
         NextCommand = new RelayCommand(GoNext, CanGoNext);
         BackCommand = new RelayCommand(GoBack, CanGoBack);
@@ -305,13 +322,13 @@ public sealed class OrderWizardViewModel : ViewModelBase
             return;
         }
 
-        if (newCargo is not null)
+        Order createdOrder = newCargo is not null
+            ? await _adminCrudService.CreateOrderWithCargoAsync(orderData!, newCargo)
+            : await _adminCrudService.CreateOrderAsync(orderData!);
+
+        if (_onOrderCreated is not null)
         {
-            await _adminCrudService.CreateOrderWithCargoAsync(orderData!, newCargo);
-        }
-        else
-        {
-            await _adminCrudService.CreateOrderAsync(orderData!);
+            await _onOrderCreated(createdOrder);
         }
 
         StatusMessage = "Заказ успешно создан.";
@@ -412,6 +429,24 @@ public sealed class OrderWizardViewModel : ViewModelBase
             string.IsNullOrWhiteSpace(Comment) ? null : Comment.Trim());
 
         return true;
+    }
+
+    private void ApplyPrefill(OrderWizardPrefillData? prefill)
+    {
+        if (prefill is null)
+        {
+            return;
+        }
+
+        _isNewCargo = prefill.IsNewCargo;
+        _selectedExistingCargoId = prefill.ExistingCargoId;
+        _cargoName = prefill.CargoName;
+        _pickupAddress = prefill.PickupAddress;
+        _deliveryAddress = prefill.DeliveryAddress;
+        _pickupContactPhone = InputValidationHelper.KeepDigitsOnly(prefill.PickupContactPhone);
+        _deliveryContactPhone = InputValidationHelper.KeepDigitsOnly(prefill.DeliveryContactPhone);
+        _desiredDeliveryAt = prefill.DesiredDeliveryAt;
+        _comment = prefill.Comment ?? string.Empty;
     }
 
     private bool SetWizardField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

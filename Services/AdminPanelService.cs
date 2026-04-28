@@ -50,6 +50,19 @@ public sealed record AdminOrderRowData(
     DateTime? DesiredDeliveryAt,
     string? CancellationReason,
     string? Comment);
+public sealed record AdminOrderRequestRowData(
+    uint Id,
+    uint ReceiverUserId,
+    string Receiver,
+    string CargoDescription,
+    string PickupAddress,
+    string DeliveryAddress,
+    string PickupContactPhone,
+    string DeliveryContactPhone,
+    string DesiredDate,
+    DateTime? DesiredDateValue,
+    string Status,
+    string? Comment);
 public sealed record AdminCargoRowData(
     uint Id,
     string Name,
@@ -79,7 +92,7 @@ public sealed record AdminVehicleRowData(
 public sealed record AdminReportCardData(string Title, string Description, string Freshness, string Format);
 public sealed record AdminDashboardData(IReadOnlyList<AdminStatData> Metrics, IReadOnlyList<AdminActivityData> RecentActivities);
 public sealed record AdminUsersData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminUserRowData> Users);
-public sealed record AdminOrdersData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminOrderRowData> Orders);
+public sealed record AdminOrdersData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminOrderRowData> Orders, IReadOnlyList<AdminOrderRequestRowData> Requests);
 public sealed record AdminCargoData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminCargoRowData> Cargo);
 public sealed record AdminDriversData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminDriverRowData> Drivers);
 public sealed record AdminVehiclesData(IReadOnlyList<AdminStatData> Stats, IReadOnlyList<AdminVehicleRowData> Vehicles);
@@ -139,6 +152,11 @@ public sealed class AdminPanelService : IAdminPanelService
 
         List<Order> dashboardOrders = await _repositoryManager.Order
             .GetAllOrdersDetailed(trackChanges: false)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        List<OrderRequest> dashboardRequests = await _repositoryManager.OrderRequest
+            .GetPendingRequestsDetailed(trackChanges: false)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
 
@@ -209,9 +227,9 @@ public sealed class AdminPanelService : IAdminPanelService
         _repositoryManager.Clear();
 
         return new AdminPanelData(
-            BuildDashboardData(dashboardUsers, dashboardDrivers, dashboardVehicles, dashboardOrders, activities),
+            BuildDashboardData(dashboardUsers, dashboardDrivers, dashboardVehicles, dashboardOrders, dashboardRequests.Count, activities),
             BuildUsersData(users),
-            BuildOrdersData(orders),
+            BuildOrdersData(orders, dashboardRequests),
             BuildCargoData(cargo, dashboardOrders),
             BuildDriversData(drivers, dashboardOrders),
             BuildVehiclesData(vehicles, dashboardOrders),
@@ -233,6 +251,7 @@ public sealed class AdminPanelService : IAdminPanelService
         IReadOnlyCollection<Driver> drivers,
         IReadOnlyCollection<Vehicle> vehicles,
         IReadOnlyCollection<Order> orders,
+        int pendingRequestsCount,
         IReadOnlyCollection<ActivityLog> activities)
     {
         int activeOrdersCount = orders.Count(IsOrderActive);
@@ -364,7 +383,36 @@ public sealed class AdminPanelService : IAdminPanelService
                 x.Comment))
             .ToList();
 
-        return new AdminOrdersData(stats, rows);
+        return new AdminOrdersData(stats, rows, []);
+    }
+
+    private static AdminOrdersData BuildOrdersData(IReadOnlyCollection<Order> orders, IReadOnlyCollection<OrderRequest> requests)
+    {
+        AdminOrdersData baseData = BuildOrdersData(orders);
+        List<AdminOrderRequestRowData> requestRows = requests
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new AdminOrderRequestRowData(
+                x.Id,
+                x.ReceiverUserId,
+                x.ReceiverUser.CompanyName ?? x.ReceiverUser.FullName,
+                x.CargoDescription,
+                x.PickupAddress,
+                x.DeliveryAddress,
+                x.PickupContactPhone,
+                x.DeliveryContactPhone,
+                FormatDateTime(x.DesiredDate),
+                x.DesiredDate,
+                GetOrderRequestStatusName(x.Status),
+                x.Comment))
+            .ToList();
+
+        IReadOnlyList<AdminStatData> stats =
+        [
+            new AdminStatData("Новые заявки", requests.Count.ToString(RuCulture), requests.Count > 0 ? "Ожидают оформления в заказ" : "Новых заявок сейчас нет"),
+            .. baseData.Stats.Skip(1)
+        ];
+
+        return new AdminOrdersData(stats, baseData.Orders, requestRows);
     }
 
     private static AdminCargoData BuildCargoData(IReadOnlyCollection<CargoItem> cargo, IReadOnlyCollection<Order> orders)
@@ -566,6 +614,14 @@ public sealed class AdminPanelService : IAdminPanelService
             "delivered" => "Доставлен",
             "received" => "Получен",
             "cancelled" => "Отменен",
+            _ => status
+        };
+
+    private static string GetOrderRequestStatusName(string status) =>
+        status switch
+        {
+            "pending" => "Ожидает обработки",
+            "processed" => "Преобразована в заказ",
             _ => status
         };
 

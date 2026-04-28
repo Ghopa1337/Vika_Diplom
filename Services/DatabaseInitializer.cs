@@ -97,9 +97,44 @@ public sealed class DatabaseInitializer : IDatabaseInitializer
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """;
 
+        const string createOrderRequestsTable = """
+            CREATE TABLE IF NOT EXISTS order_requests (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                receiver_user_id INT UNSIGNED NOT NULL,
+                cargo_description VARCHAR(500) NOT NULL,
+                pickup_address VARCHAR(500) NOT NULL,
+                delivery_address VARCHAR(500) NOT NULL,
+                pickup_contact_phone VARCHAR(20) NOT NULL,
+                delivery_contact_phone VARCHAR(20) NOT NULL,
+                desired_date DATETIME NULL,
+                comment TEXT NULL,
+                status VARCHAR(30) NOT NULL DEFAULT 'pending',
+                processed_by_user_id INT UNSIGNED NULL,
+                created_order_id INT UNSIGNED NULL,
+                processed_at DATETIME NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                UNIQUE KEY uq_order_requests_created_order_id (created_order_id),
+                KEY idx_order_requests_receiver_user_id (receiver_user_id),
+                KEY idx_order_requests_status (status),
+                KEY idx_order_requests_created_at (created_at),
+                KEY idx_order_requests_processed_by_user_id (processed_by_user_id),
+                CONSTRAINT fk_order_requests_receiver_user
+                    FOREIGN KEY (receiver_user_id) REFERENCES users (id)
+                    ON UPDATE CASCADE
+                    ON DELETE RESTRICT,
+                CONSTRAINT fk_order_requests_processed_by_user
+                    FOREIGN KEY (processed_by_user_id) REFERENCES users (id)
+                    ON UPDATE CASCADE
+                    ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """;
+
         await _repositoryManager.Schema.ExecuteSqlAsync(createRolesTable, cancellationToken);
         await _repositoryManager.Schema.ExecuteSqlAsync(createUsersTable, cancellationToken);
         await _repositoryManager.Schema.ExecuteSqlAsync(createActivityLogsTable, cancellationToken);
+        await _repositoryManager.Schema.ExecuteSqlAsync(createOrderRequestsTable, cancellationToken);
     }
 
     private async Task SeedRolesAsync(CancellationToken cancellationToken)

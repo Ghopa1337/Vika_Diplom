@@ -14,6 +14,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IAdminPanelService _adminPanelService;
     private readonly IAdminCrudService _adminCrudService;
     private readonly IRoleOrderWorkspaceService _roleOrderWorkspaceService;
+    private readonly IOrderRequestService _orderRequestService;
     private readonly IWindowService _windowService;
     private readonly AdminDashboardSectionViewModel _dashboardSection;
     private readonly AdminUsersSectionViewModel _usersSection;
@@ -69,6 +70,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         IAdminPanelService adminPanelService,
         IAdminCrudService adminCrudService,
         IRoleOrderWorkspaceService roleOrderWorkspaceService,
+        IOrderRequestService orderRequestService,
         IUserSelfService userSelfService,
         IWindowService windowService)
     {
@@ -76,6 +78,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _adminPanelService = adminPanelService;
         _adminCrudService = adminCrudService;
         _roleOrderWorkspaceService = roleOrderWorkspaceService;
+        _orderRequestService = orderRequestService;
         _windowService = windowService;
         _authStateService.AuthStateChanged += HandleAuthStateChanged;
         _closeModalCommand = new RelayCommand(CloseModal, () => ActiveModalContent is not null);
@@ -83,7 +86,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         _dashboardSection = new AdminDashboardSectionViewModel();
         _usersSection = new AdminUsersSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
-        _ordersSection = new AdminOrdersSectionViewModel(_adminCrudService, ReloadAdminPanelAsync, receiverId => OpenOrderWizard(receiverId), OpenOrderDetails);
+        _ordersSection = new AdminOrdersSectionViewModel(_adminCrudService, ReloadAdminPanelAsync, receiverId => OpenOrderWizard(receiverId), OpenOrderWizardFromRequest, OpenOrderDetails);
         _cargoSection = new AdminCargoSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
         _driversSection = new AdminDriversSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
         _vehiclesSection = new AdminVehiclesSectionViewModel(_adminCrudService, ReloadAdminPanelAsync);
@@ -109,7 +112,8 @@ public sealed class MainWindowViewModel : ViewModelBase
             RoleOrderCabinetMode.Receiver,
             OpenOrderDetails,
             UpdateSelfServiceShellAsync,
-            OpenReceiverOrderWizard);
+            OpenReceiverOrderRequestWizard,
+            _orderRequestService);
         _receiverProfileSection = new RoleChecklistSectionViewModel(
             "Профиль получателя",
             "Личный раздел под контактные данные, компанию и будущую смену пароля.",
@@ -330,8 +334,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         _driversNavigationItem.Badge = $"{panelData.Drivers.Drivers.Count}";
         _vehiclesNavigationItem.Badge = $"{panelData.Vehicles.Vehicles.Count}";
         _reportsNavigationItem.Badge = $"{panelData.Reports.Reports.Count}";
-        _dispatcherDashboardNavigationItem.Badge = $"{panelData.Orders.Orders.Count}";
-        _dispatcherOrdersNavigationItem.Badge = $"{panelData.Orders.Orders.Count}";
+        _dispatcherDashboardNavigationItem.Badge = $"{panelData.Orders.Requests.Count}";
+        _dispatcherOrdersNavigationItem.Badge = $"{panelData.Orders.Requests.Count}";
         _dispatcherCargoNavigationItem.Badge = $"{panelData.Cargo.Cargo.Count}";
         _dispatcherDriversNavigationItem.Badge = $"{panelData.Drivers.Drivers.Count}";
         _dispatcherVehiclesNavigationItem.Badge = $"{panelData.Vehicles.Vehicles.Count}";
@@ -350,7 +354,12 @@ public sealed class MainWindowViewModel : ViewModelBase
             ]);
     }
 
-    public void OpenOrderWizard(uint? receiverId = null, bool lockReceiver = false, bool allowAssignment = true)
+    public void OpenOrderWizard(
+        uint? receiverId = null,
+        bool lockReceiver = false,
+        bool allowAssignment = true,
+        OrderWizardPrefillData? prefill = null,
+        Func<Order, Task>? onOrderCreated = null)
     {
         var wizard = new OrderWizardViewModel(
             _adminCrudService,
@@ -361,7 +370,9 @@ public sealed class MainWindowViewModel : ViewModelBase
             },
             receiverId,
             lockReceiver,
-            allowAssignment);
+            allowAssignment,
+            prefill,
+            onOrderCreated);
 
         ActiveModalContent = wizard;
         _ = LoadOrderWizardAsync(wizard);
@@ -381,10 +392,51 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private void CloseModal() => ActiveModalContent = null;
 
-    private void OpenReceiverOrderWizard()
+    private void OpenReceiverOrderRequestWizard()
     {
-        uint? receiverId = _authStateService.CurrentUser?.Id;
-        OpenOrderWizard(receiverId, lockReceiver: true, allowAssignment: false);
+        var wizard = new OrderRequestWizardViewModel(
+            _orderRequestService,
+            async () =>
+            {
+                ActiveModalContent = null;
+                await ReloadAdminPanelAsync();
+            });
+
+        ActiveModalContent = wizard;
+    }
+
+    private async void OpenOrderWizardFromRequest(uint requestId)
+    {
+        try
+        {
+            OrderRequest? request = await _orderRequestService.GetRequestByIdAsync(requestId);
+            if (request is null)
+            {
+                _ordersSection.StatusMessage = "Заявка не найдена.";
+                return;
+            }
+
+            OpenOrderWizard(
+                request.ReceiverUserId,
+                lockReceiver: true,
+                allowAssignment: true,
+                prefill: new OrderWizardPrefillData(
+                    request.ReceiverUserId,
+                    true,
+                    null,
+                    request.CargoDescription,
+                    request.PickupAddress,
+                    request.DeliveryAddress,
+                    request.PickupContactPhone,
+                    request.DeliveryContactPhone,
+                    request.DesiredDate,
+                    request.Comment),
+                onOrderCreated: order => _orderRequestService.MarkRequestProcessedAsync(requestId, order.Id));
+        }
+        catch (Exception ex)
+        {
+            _ordersSection.StatusMessage = $"Ошибка загрузки заявки: {ex.Message}";
+        }
     }
 
     private void Logout()
