@@ -1505,12 +1505,8 @@
                                                       ItemsSource="{Binding Requests}"
                                                       SelectedItem="{Binding SelectedRequest, Mode=TwoWay}">
                                                 <DataGrid.Columns>
-                                                    <DataGridTextColumn Header="№" Binding="{Binding Id}" Width="0.6*" />
-                                                    <DataGridTextColumn Header="Получатель" Binding="{Binding Receiver}" Width="1.4*" />
-                                                    <DataGridTextColumn Header="Груз" Binding="{Binding CargoDescription}" Width="1.5*" />
-                                                    <DataGridTextColumn Header="Маршрут" Binding="{Binding PickupAddress}" Width="1.4*" />
-                                                    <DataGridTextColumn Header="Куда" Binding="{Binding DeliveryAddress}" Width="1.4*" />
-                                                    <DataGridTextColumn Header="Дата" Binding="{Binding DesiredDate}" Width="1*" />
+                                                    <DataGridTextColumn Header="Кто заказывал" Binding="{Binding Receiver}" Width="1.2*" />
+                                                    <DataGridTextColumn Header="Какой груз" Binding="{Binding CargoDescription}" Width="1.8*" />
                                                 </DataGrid.Columns>
                                             </DataGrid>
                                         </Border>
