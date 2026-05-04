@@ -9,10 +9,10 @@
         xmlns:viewModels="clr-namespace:CargoTransport.Desktop.ViewModels"
         mc:Ignorable="d"
         Title="Система учета грузоперевозок"
-        Width="1360"
-        Height="860"
-        MinWidth="1180"
-        MinHeight="720"
+        Width="1200"
+        Height="760"
+        MinWidth="980"
+        MinHeight="620"
         Icon="Assets/AppIcon.png"
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized"
@@ -61,17 +61,17 @@
 
         <Style x:Key="CrudTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
             <Setter Property="Margin" Value="0,0,10,10" />
-            <Setter Property="MinWidth" Value="190" />
+            <Setter Property="MinWidth" Value="160" />
         </Style>
 
         <Style x:Key="CrudComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignOutlinedComboBox}">
             <Setter Property="Margin" Value="0,0,10,10" />
-            <Setter Property="MinWidth" Value="190" />
+            <Setter Property="MinWidth" Value="160" />
         </Style>
 
         <Style x:Key="CrudButtonStyle" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
             <Setter Property="Margin" Value="0,0,10,10" />
-            <Setter Property="MinWidth" Value="110" />
+            <Setter Property="MinWidth" Value="100" />
         </Style>
 
         <Style x:Key="SectionExpanderStyle" TargetType="Expander">
@@ -189,7 +189,7 @@
 
                                 <StackPanel Margin="0,18,0,0"
                                             Visibility="{Binding IsNewCargo, Converter={local:BooleanToVisibilityConverter}}">
-                                    <UniformGrid Columns="2">
+                                    <WrapPanel>
                                         <TextBox Margin="0,0,10,10"
                                                  Text="{Binding CargoName, UpdateSourceTrigger=PropertyChanged}"
                                                  materialDesign:HintAssist.Hint="Наименование груза" />
@@ -208,7 +208,7 @@
                                         <TextBox Margin="0,0,10,10"
                                                  Text="{Binding CargoVolume, UpdateSourceTrigger=PropertyChanged}"
                                                  materialDesign:HintAssist.Hint="Объем, м3" />
-                                    </UniformGrid>
+                                    </WrapPanel>
 
                                     <TextBox Height="84"
                                              Text="{Binding SpecialRequirements, UpdateSourceTrigger=PropertyChanged}"
@@ -238,7 +238,7 @@
                                            TextWrapping="Wrap"
                                            Foreground="#687683" />
 
-                                <UniformGrid Margin="0,18,0,0" Columns="2">
+                                <WrapPanel Margin="0,18,0,0">
                                     <TextBox Margin="0,0,10,10"
                                              Text="{Binding PickupAddress, UpdateSourceTrigger=PropertyChanged}"
                                              materialDesign:HintAssist.Hint="Адрес погрузки" />
@@ -252,14 +252,16 @@
                                              Text="{Binding DeliveryContactPhone, UpdateSourceTrigger=PropertyChanged}"
                                              materialDesign:HintAssist.Hint="Телефон получателя" />
                                     <DatePicker Margin="0,0,10,10"
+                                                MinWidth="160"
                                                 SelectedDate="{Binding PlannedPickupAt}"
                                                 DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}"
                                                 materialDesign:HintAssist.Hint="План погрузки" />
                                     <DatePicker Margin="0,0,10,10"
+                                                MinWidth="160"
                                                 SelectedDate="{Binding DesiredDeliveryAt}"
                                                 DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}"
                                                 materialDesign:HintAssist.Hint="Желаемая доставка" />
-                                </UniformGrid>
+                                </WrapPanel>
 
                                 <TextBox Height="84"
                                          Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}"
@@ -279,7 +281,7 @@
                                            TextWrapping="Wrap"
                                            Foreground="#687683" />
 
-                                <UniformGrid Margin="0,18,0,0" Columns="2">
+                                <WrapPanel Margin="0,18,0,0">
                                     <TextBox Margin="0,0,10,10"
                                              Text="{Binding DistanceKm, UpdateSourceTrigger=PropertyChanged}"
                                              materialDesign:HintAssist.Hint="Расстояние, км" />
@@ -301,7 +303,7 @@
                                               ItemsSource="{Binding VehicleOptions}"
                                               Visibility="{Binding IsAssignmentVisible, Converter={local:BooleanToVisibilityConverter}}"
                                               materialDesign:HintAssist.Hint="Транспорт" />
-                                </UniformGrid>
+                                </WrapPanel>
                             </StackPanel>
                         </Grid>
                     </ScrollViewer>
@@ -370,8 +372,9 @@
                                    Foreground="#0F5C69"
                                    TextWrapping="Wrap" />
 
-                        <UniformGrid Margin="0,18,0,0" Columns="2">
+                        <WrapPanel Margin="0,18,0,0">
                             <DatePicker Margin="0,0,10,10"
+                                        MinWidth="160"
                                         materialDesign:HintAssist.Hint="Желаемая дата"
                                         SelectedDate="{Binding DesiredDate, Mode=TwoWay}"
                                         DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}" />
@@ -394,7 +397,7 @@
                                      Style="{StaticResource CrudTextBoxStyle}"
                                      materialDesign:HintAssist.Hint="Комментарий"
                                      Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" />
-                        </UniformGrid>
+                        </WrapPanel>
                     </StackPanel>
                 </Border>
 
@@ -515,7 +518,7 @@
 
                     <ScrollViewer Margin="0,0,18,0" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <UniformGrid Columns="4">
+                            <WrapPanel>
                                 <Border Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                                     <StackPanel>
                                         <TextBlock Text="Стоимость" FontSize="12" Foreground="#6A7784" />
@@ -540,9 +543,9 @@
                                         <TextBlock Margin="0,8,0,0" Text="{Binding UpdatedAtLabel}" FontSize="16" FontWeight="SemiBold" Foreground="#22303A" />
                                     </StackPanel>
                                 </Border>
-                            </UniformGrid>
+                            </WrapPanel>
 
-                            <UniformGrid Columns="2">
+                            <WrapPanel>
                                 <Border Margin="0,0,12,12" Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                                     <StackPanel>
                                         <TextBlock Text="Участники и груз" FontSize="17" FontWeight="SemiBold" Foreground="#22303A" />
@@ -576,7 +579,7 @@
                                         <TextBlock Margin="0,6,0,0" Text="{Binding CancellationLabel}" TextWrapping="Wrap" LineHeight="21" FontSize="13" Foreground="#22303A" />
                                     </StackPanel>
                                 </Border>
-                            </UniformGrid>
+                            </WrapPanel>
                         </StackPanel>
                     </ScrollViewer>
 
@@ -692,12 +695,12 @@
                                 <TextBlock Text="Контактные данные" FontSize="20" FontWeight="SemiBold" Foreground="#22303A" />
                                 <TextBlock Margin="0,8,0,18" Text="Эти данные видит диспетчер при работе с заказом и рейсом." Foreground="#687683" />
 
-                                <UniformGrid Columns="2">
+                                <WrapPanel>
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="ФИО / контактное лицо" Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Компания" Text="{Binding CompanyName, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Email *" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон *" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" />
-                                </UniformGrid>
+                                </WrapPanel>
 
                                 <Button Margin="0,8,0,0" Width="170" HorizontalAlignment="Left" Command="{Binding SaveProfileCommand}" Content="Сохранить профиль" Style="{StaticResource MaterialDesignRaisedButton}" />
                             </StackPanel>
@@ -708,23 +711,23 @@
                                 <TextBlock Text="Смена пароля" FontSize="20" FontWeight="SemiBold" Foreground="#22303A" />
                                 <TextBlock Margin="0,8,0,18" Text="Отдельный безопасный сценарий: текущий пароль проверяется, старый хэш сохраняется в истории." Foreground="#687683" TextWrapping="Wrap" />
 
-                                <UniformGrid Columns="3">
+                                <WrapPanel>
                                     <PasswordBox Margin="0,0,10,10"
-                                                 MinWidth="190"
+                                                 MinWidth="160"
                                                  behaviors:PasswordBoxAssistant.BindPassword="True"
                                                  behaviors:PasswordBoxAssistant.BoundPassword="{Binding CurrentPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                  materialDesign:HintAssist.Hint="Текущий пароль" />
                                     <PasswordBox Margin="0,0,10,10"
-                                                 MinWidth="190"
+                                                 MinWidth="160"
                                                  behaviors:PasswordBoxAssistant.BindPassword="True"
                                                  behaviors:PasswordBoxAssistant.BoundPassword="{Binding NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                  materialDesign:HintAssist.Hint="Новый пароль" />
                                     <PasswordBox Margin="0,0,10,10"
-                                                 MinWidth="190"
+                                                 MinWidth="160"
                                                  behaviors:PasswordBoxAssistant.BindPassword="True"
                                                  behaviors:PasswordBoxAssistant.BoundPassword="{Binding ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                  materialDesign:HintAssist.Hint="Повтор пароля" />
-                                </UniformGrid>
+                                </WrapPanel>
 
                                 <WrapPanel Margin="0,8,0,0">
                                     <Button Margin="0,0,10,0" Width="170" Command="{Binding ChangePasswordCommand}" Content="Сменить пароль" Style="{StaticResource MaterialDesignRaisedButton}" />
@@ -1014,7 +1017,7 @@
                                        TextWrapping="Wrap"
                                        Foreground="#687683" />
 
-                            <UniformGrid Margin="0,18,0,0" Columns="2">
+                            <WrapPanel Margin="0,18,0,0">
                                 <StackPanel Margin="0,0,10,10">
                                     <TextBlock Text="Статус" FontSize="12" Foreground="#6A7784" />
                                     <TextBlock Margin="0,6,0,0" Text="{Binding SelectedOrderStatusLabel}" FontSize="14" FontWeight="SemiBold" Foreground="#22303A" />
@@ -1031,7 +1034,7 @@
                                     <TextBlock Text="Стоимость" FontSize="12" Foreground="#6A7784" />
                                     <TextBlock Margin="0,6,0,0" Text="{Binding SelectedOrderCostValue}" FontSize="14" FontWeight="SemiBold" Foreground="#22303A" />
                                 </StackPanel>
-                            </UniformGrid>
+                            </WrapPanel>
 
                             <StackPanel Margin="0,6,0,0">
                                 <TextBlock Text="{Binding SelectedOrderPickupLabel}" FontSize="12" Foreground="#6A7784" />
@@ -1356,7 +1359,7 @@
                         <ColumnDefinition Width="1.35*" />
                     </Grid.ColumnDefinitions>
 
-                    <Expander Style="{StaticResource SectionExpanderStyle}" Margin="0,0,12,0" Header="Фильтры" IsExpanded="True">
+                    <Expander Style="{StaticResource SectionExpanderStyle}" Margin="0,0,12,0" Header="Фильтры" IsExpanded="False">
                         <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                             <WrapPanel>
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Поиск: логин, ФИО, телефон" Text="{Binding FilterSearch, UpdateSourceTrigger=PropertyChanged}" />
@@ -1369,7 +1372,7 @@
                         </Border>
                     </Expander>
 
-                    <Expander Style="{StaticResource SectionExpanderStyle}" Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="True">
+                    <Expander Style="{StaticResource SectionExpanderStyle}" Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="False">
                         <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                             <StackPanel>
                             <WrapPanel>
@@ -1380,7 +1383,7 @@
                                 <TextBlock Margin="8,8,0,0" Text="{Binding StatusMessage}" Foreground="#0F5C69" TextWrapping="Wrap" />
                             </WrapPanel>
 
-                            <UniformGrid Columns="4">
+                            <WrapPanel>
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Логин" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="{Binding PasswordHint}" Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="ФИО / организация" Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" />
@@ -1393,7 +1396,7 @@
                                     <CheckBox Margin="0,0,14,0" Content="Заблокирован" IsChecked="{Binding IsBlocked}" />
                                     <CheckBox Content="Сменить пароль" IsChecked="{Binding MustChangePassword}" />
                                 </StackPanel>
-                            </UniformGrid>
+                            </WrapPanel>
                         </StackPanel>
                     </Border>
                 </Expander>
@@ -1447,7 +1450,7 @@
                         <ColumnDefinition Width="1.35*" />
                     </Grid.ColumnDefinitions>
 
-                    <Expander Style="{StaticResource SectionExpanderStyle}" Margin="0,0,12,0" Header="Фильтры" IsExpanded="True">
+                    <Expander Style="{StaticResource SectionExpanderStyle}" Margin="0,0,12,0" Header="Фильтры" IsExpanded="False">
                         <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                             <WrapPanel>
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Поиск: номер, адрес, груз" Text="{Binding FilterSearch, UpdateSourceTrigger=PropertyChanged}" />
@@ -1461,7 +1464,7 @@
                         </Border>
                     </Expander>
 
-                    <Expander Style="{StaticResource SectionExpanderStyle}" Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="True">
+                    <Expander Style="{StaticResource SectionExpanderStyle}" Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="False">
                         <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                             <StackPanel>
                             <WrapPanel>
@@ -1560,15 +1563,15 @@
 
                             <StackPanel Margin="0,16,0,0"
                                         Visibility="{Binding HasSelectedOrder, Converter={local:BooleanToVisibilityConverter}}">
-                                <UniformGrid Columns="4">
+                                <WrapPanel>
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Номер заказа" Text="{Binding OrderNumber, UpdateSourceTrigger=PropertyChanged}" />
                                     <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Получатель" ItemsSource="{Binding ReceiverOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedReceiverUserId, Mode=TwoWay}" />
                                     <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Груз" ItemsSource="{Binding CargoOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedCargoId, Mode=TwoWay}" />
                                     <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedStatusCode, Mode=TwoWay}" />
                                     <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Водитель" ItemsSource="{Binding DriverOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedDriverId, Mode=TwoWay}" />
                                     <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Транспорт" ItemsSource="{Binding VehicleOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedVehicleId, Mode=TwoWay}" />
-                                    <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="План погрузки" SelectedDate="{Binding PlannedPickupAt, Mode=TwoWay}" DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}" />
-                                    <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="Желаемая доставка" SelectedDate="{Binding DesiredDeliveryAt, Mode=TwoWay}" DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}" />
+                                    <DatePicker Margin="0,0,10,10" MinWidth="160" materialDesign:HintAssist.Hint="План погрузки" SelectedDate="{Binding PlannedPickupAt, Mode=TwoWay}" DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}" />
+                                    <DatePicker Margin="0,0,10,10" MinWidth="160" materialDesign:HintAssist.Hint="Желаемая доставка" SelectedDate="{Binding DesiredDeliveryAt, Mode=TwoWay}" DisplayDateStart="{Binding MinSelectableDate, Mode=OneWay}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Адрес погрузки" Text="{Binding PickupAddress, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Адрес доставки" Text="{Binding DeliveryAddress, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Км" Text="{Binding DistanceKm, UpdateSourceTrigger=PropertyChanged}" />
@@ -1577,7 +1580,7 @@
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Телефон получателя" Text="{Binding DeliveryContactPhone, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Причина отмены" Text="{Binding CancellationReason, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Комментарий" Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" />
-                                </UniformGrid>
+                                </WrapPanel>
                             </StackPanel>
                         </StackPanel>
                         </Border>
@@ -1632,7 +1635,7 @@
                         <ColumnDefinition Width="1.35*" />
                     </Grid.ColumnDefinitions>
 
-                    <Expander Style="{StaticResource SectionExpanderStyle}" Margin="0,0,12,0" Header="Фильтры" IsExpanded="True">
+                    <Expander Style="{StaticResource SectionExpanderStyle}" Margin="0,0,12,0" Header="Фильтры" IsExpanded="False">
                         <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                             <WrapPanel>
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Поиск: наименование, тип" Text="{Binding FilterSearch, UpdateSourceTrigger=PropertyChanged}" />
@@ -1644,7 +1647,7 @@
                         </Border>
                     </Expander>
 
-                    <Expander Style="{StaticResource SectionExpanderStyle}" Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="True">
+                    <Expander Style="{StaticResource SectionExpanderStyle}" Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="False">
                         <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                             <StackPanel>
                                 <WrapPanel>
@@ -1655,14 +1658,14 @@
                                     <TextBlock Margin="8,8,0,0" Text="{Binding StatusMessage}" Foreground="#0F5C69" TextWrapping="Wrap" />
                                 </WrapPanel>
 
-                                <UniformGrid Columns="4">
+                                <WrapPanel>
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Наименование" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
                                     <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Тип груза" ItemsSource="{Binding CargoTypeOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedCargoTypeCode, Mode=TwoWay}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Вес, кг" Text="{Binding WeightKg, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Объём, м3" Text="{Binding VolumeM3, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Описание" Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Особые требования" Text="{Binding SpecialRequirements, UpdateSourceTrigger=PropertyChanged}" />
-                                </UniformGrid>
+                                </WrapPanel>
                             </StackPanel>
                         </Border>
                     </Expander>
@@ -1717,7 +1720,7 @@
                         <ColumnDefinition Width="1.35*" />
                     </Grid.ColumnDefinitions>
 
-                    <Expander Style="{StaticResource SectionExpanderStyle}" Margin="0,0,12,0" Header="Фильтры" IsExpanded="True">
+                    <Expander Style="{StaticResource SectionExpanderStyle}" Margin="0,0,12,0" Header="Фильтры" IsExpanded="False">
                         <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                             <WrapPanel>
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Поиск: ФИО, ВУ, телефон" Text="{Binding FilterSearch, UpdateSourceTrigger=PropertyChanged}" />
@@ -1729,7 +1732,7 @@
                         </Border>
                     </Expander>
 
-                    <Expander Style="{StaticResource SectionExpanderStyle}" Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="True">
+                    <Expander Style="{StaticResource SectionExpanderStyle}" Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="False">
                         <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                             <StackPanel>
                             <WrapPanel>
@@ -1740,14 +1743,14 @@
                                 <TextBlock Margin="8,8,0,0" Text="{Binding StatusMessage}" Foreground="#0F5C69" TextWrapping="Wrap" />
                             </WrapPanel>
 
-                            <UniformGrid Columns="4">
+                            <WrapPanel>
                                 <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Пользователь" ItemsSource="{Binding DriverUserOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedDriverUserId, Mode=TwoWay}" />
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Номер ВУ" Text="{Binding LicenseNumber, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Категория" Text="{Binding LicenseCategory, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Стаж" Text="{Binding ExperienceYears, UpdateSourceTrigger=PropertyChanged}" />
                                 <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedStatusCode, Mode=TwoWay}" />
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Заметки" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" />
-                            </UniformGrid>
+                            </WrapPanel>
                         </StackPanel>
                     </Border>
                 </Expander>
@@ -1801,7 +1804,7 @@
                         <ColumnDefinition Width="1.35*" />
                     </Grid.ColumnDefinitions>
 
-                    <Expander Style="{StaticResource SectionExpanderStyle}" Margin="0,0,12,0" Header="Фильтры" IsExpanded="True">
+                    <Expander Style="{StaticResource SectionExpanderStyle}" Margin="0,0,12,0" Header="Фильтры" IsExpanded="False">
                         <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                             <WrapPanel>
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Поиск: госномер, модель, водитель" Text="{Binding FilterSearch, UpdateSourceTrigger=PropertyChanged}" />
@@ -1814,7 +1817,7 @@
                         </Border>
                     </Expander>
 
-                    <Expander Style="{StaticResource SectionExpanderStyle}" Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="True">
+                    <Expander Style="{StaticResource SectionExpanderStyle}" Grid.Column="1" Header="{Binding FormTitle}" IsExpanded="False">
                         <Border Padding="18" CornerRadius="20" Background="White" BorderBrush="#E8EEF2" BorderThickness="1">
                             <StackPanel>
                             <WrapPanel>
@@ -1825,7 +1828,7 @@
                                 <TextBlock Margin="8,8,0,0" Text="{Binding StatusMessage}" Foreground="#0F5C69" TextWrapping="Wrap" />
                             </WrapPanel>
 
-                            <UniformGrid Columns="4">
+                            <WrapPanel>
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Госномер" Text="{Binding LicensePlate, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Модель" Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Грузоподъемность, кг" Text="{Binding CapacityKg, UpdateSourceTrigger=PropertyChanged}" />
@@ -1834,9 +1837,9 @@
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Год выпуска" Text="{Binding ProductionYear, UpdateSourceTrigger=PropertyChanged}" />
                                 <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding SelectedStatusCode, Mode=TwoWay}" />
                                 <ComboBox Style="{StaticResource CrudComboBoxStyle}" materialDesign:HintAssist.Hint="Закрепленный водитель" ItemsSource="{Binding DriverOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" SelectedValue="{Binding SelectedCurrentDriverId, Mode=TwoWay}" />
-                                <DatePicker Margin="0,0,10,10" materialDesign:HintAssist.Hint="Страховка до" SelectedDate="{Binding InsuranceExpiry, Mode=TwoWay}" />
+                                <DatePicker Margin="0,0,10,10" MinWidth="160" materialDesign:HintAssist.Hint="Страховка до" SelectedDate="{Binding InsuranceExpiry, Mode=TwoWay}" />
                                 <TextBox Style="{StaticResource CrudTextBoxStyle}" materialDesign:HintAssist.Hint="Заметки" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" />
-                            </UniformGrid>
+                            </WrapPanel>
                         </StackPanel>
                     </Border>
                 </Expander>
